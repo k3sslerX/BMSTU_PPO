@@ -62,5 +62,8 @@ Web-Приложение, позволяющее отслеживать и ср�
 ### Просмотр статистики
 ![BPMNStat](/docs/images/BPMNStatReq.png)
 
+### Добавление/изменение данных
+![BPMNAdm](/docs/images/BPMNAdm.png)
+
 ### Судоку-подобная игра
 ![BPMNSudoku](/docs/images/BPMNSudoku.png)
