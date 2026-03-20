@@ -103,3 +103,4 @@ Web PWA
 ![UMLSudoku](/docs/images/gameUML.png)
 
 ## DBML базы данных
+![DBML](/docs/images/DBML.png)
