@@ -1,0 +1,100 @@
+Table car {
+  id integer [primary key]
+  manufacturer integer
+  model text
+  year_of_production integer
+  raceclass integer
+}
+
+Table car_p {
+  id integer [primary key]
+  car integer
+  team integer
+  number text
+}
+
+Table championship {
+  id integer [primary key]
+  organizer integer
+  year integer
+}
+
+Table driver {
+  id integer [primary key]
+  name text
+  birthday datetime
+  nationality text
+}
+
+Table finish {
+  race integer
+  car_p integer
+  pos integer
+}
+
+Table qualifying {
+  race integer
+  car_p integer
+  pos integer
+}
+
+Table manufacturer {
+  id integer [primary key]
+  name text
+  country text
+  year_of_foundation integer
+}
+
+Table organizer {
+  id integer [primary key]
+  name text
+}
+
+Table race {
+  id integer [primary key]
+  championship integer
+  track integer
+  name text
+  date datetime
+  type integer
+  duration integer
+}
+
+Table raceclass {
+  id integer [primary key]
+  name text
+}
+
+Table team {
+  id integer [primary key]
+  name text
+  year_of_foundation integer
+}
+
+Table team_p {
+  id integer [primary key]
+  car_p integer
+  driver integer
+}
+
+Table track {
+  id integer [primary key]
+  name text
+  country text
+  lap_length integer
+  turns integer
+}
+
+Ref car_car_p: car.id < car_p.car
+Ref manufacturer_car: manufacturer.id < car.manufacturer
+Ref organizer_ch: organizer.id < championship.organizer
+Ref c_rc: raceclass.id < car.raceclass
+Ref c_r: championship.id < race.championship
+Ref finish: finish.race > race.id
+Ref finish_c: car_p.id > finish.car_p
+Ref cars: team.id <> car_p.team
+Ref car_p_team_p: car_p.id - team_p.car_p
+Ref drivers: driver.id <> team_p.driver
+Ref quali: qualifying.race > race.id
+Ref quali_c: car_p.id > qualifying.car_p
+Ref track_r: track.id < race.track
