@@ -88,7 +88,8 @@ Web PWA
 ![C4L3](/docs/images/C4L3.svg)
 
 ### L4
-![C4L4](/docs/images/C4L4.svg)
+#### Компонент доступа к данным
+![C4L4](/docs/images/C4L4Data.png)
 
 ## UML для бизнес-процессов
 

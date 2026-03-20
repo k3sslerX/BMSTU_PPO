@@ -1,0 +1,125 @@
+@startuml
+top to bottom direction
+package database{
+class Repository {
++Pool: *Pool
++AddFavourite(user User, driver Driver): error
++RequestGame(): *Game, error
++GetDriverStats(driver Driver): driverStats, error
++GetTeamStats(driver Driver): teamStats, error
+}
+}
+package models{
+class Championship {
++Id: int
++Name: string
++Year: int
+
+}
+class Driver {
++ID: int
++Name: string
++Nationality: string
++BirthDate: Time
+
+}
+class DriverStats {
++Driver: Driver
++TotalRaces: int
++TotalWins: int
++TotalPodiums: int
++TotalPoints: int
++TotalPoles: int
++BestFinish: int
++BestQualifying: int
++ChampionshipWins: int
++BestChampionshipPosition: int
+
+}
+class Game {
++Conditions: []string
++Answers: [][][]Driver
+
+}
+class Lineup {
++Id: int
++Drivers: []Driver
++Team: Team
++Number: string
+
+}
+class Race {
++Id: int
++Championship: Championship
++Name: string
++Date: Time
++Type: int
++Distance: int
++Track: Track
+
+}
+class RaceResults {
++Race: Race
++Results: []Result
+
+}
+class Result {
++Lineup: Lineup
++Class: string
++Qualifying: int
++Race: int
+
+}
+class Team {
++Id: int
++Name: string
++Country: string
+
+}
+class TeamStats {
++Team: Team
++TotalRaces: int
++TotalWins: int
++TotalPodiums: int
++TotalPoints: int
++TotalPoles: int
++BestFinish: int
++BestQualifying: int
++ChampionshipWins: int
++BestChampionshipPosition: int
+
+}
+class Track {
++Id: int
++Name: string
++Location: string
++Length: int
++Turns: int
+
+}
+class User {
++Id: int
++Favourites: []Driver
+
+}
+}
+"Race" --> "Championship"
+"DriverStats" --> "Driver"
+"Lineup" --> "Driver"
+"User" --> "Driver"
+"Result" --> "Lineup"
+"Lineup" --> "Team"
+"RaceResults" --> "Race"
+"Race" --> "Track"
+"RaceResults" --> "Result"
+"RaceResults" --> "TeamStats"
+"RaceResults" --> "DriverStats"
+"TeamStats" --> "Team"
+"Repository" --> "User"
+"Repository" --> "Driver"
+"Repository" --> "DriverStats"
+"Repository" --> "Team"
+"Repository" --> "TeamStats"
+"Repository" --> "Game"
+
+@enduml
