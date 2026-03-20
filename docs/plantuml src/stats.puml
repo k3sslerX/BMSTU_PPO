@@ -22,12 +22,12 @@ class TeamStatsUseCase {
 }
 }
 
+package internal/models{
 class Driver {
 +ID: int
 +Name: string
 +Nationality: string
 +BirthDate: Time
-
 }
 class DriverStats {
 +Driver: Driver
@@ -40,7 +40,6 @@ class DriverStats {
 +BestQualifying: int
 +ChampionshipWins: int
 +BestChampionshipPosition: int
-
 }
 
 class Team {
@@ -60,7 +59,7 @@ class TeamStats {
 +BestQualifying: int
 +ChampionshipWins: int
 +BestChampionshipPosition: int
-
+}
 }
 
 package internal/repository{
