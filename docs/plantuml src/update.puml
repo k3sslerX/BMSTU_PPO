@@ -1,0 +1,18 @@
+@startuml
+top to bottom direction
+
+package internal/models{
+class User {
++Id: int
++Favourites: []Driver
++Administrator: bool
+}
+}
+package internal/repository{
+class Repository {
++Pool: *Pool
++UpdateData(query): error
+}
+}
+"User" --> "Repository"
+@enduml
