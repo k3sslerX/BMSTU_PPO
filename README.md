@@ -91,16 +91,26 @@ Web PWA
 #### Компонент доступа к данным
 ![C4L4](/docs/images/C4L4Data.png)
 
-## UML для бизнес-процессов
+#### Компоненты бизнес-процессов
 
-### Просмотр статистики
+##### Просмотр статистики
 ![UMLSudoku](/docs/images/statsUML.png)
 
-### Добавление/изменение данных
+##### Добавление/изменение данных
 ![UMLAdm](/docs/images/updateUML.png)
 
-### Судоку-подобная игра
+##### Судоку-подобная игра
 ![UMLSudoku](/docs/images/gameUML.png)
+
+## Диграммы последовательностей
+### Просмотр статистики
+![statSeq](/docs/images/statsSeq.png)
+
+### Добавление/изменение данных
+![updateSeq](/docs/images/updateSeq.png)
+
+### Судоку-подобная игра
+![gameSeq](/docs/images/gameSeq.png)
 
 ## DBML базы данных
 ![DBML](/docs/images/DBML.png)

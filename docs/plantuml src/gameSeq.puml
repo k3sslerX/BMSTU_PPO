@@ -1,0 +1,41 @@
+@startuml
+
+actor "Пользователь" as b
+box "Клиент"
+  participant "Frontend" as c
+box end
+box "Сервер"
+    participant "Модуль судоку-подобной игры" as s
+box end
+box "База данных"
+  database "База данных" as db
+box end
+
+b -> c: Запрос матрицы
+activate c
+c -> s: Запрос матрицы
+activate s
+s -> s: Формирование матрицы
+s -> db: Запрос данных для матрицы
+activate db
+
+db --> s: Ответ
+deactivate db
+s -> s: Заполнениие матрицы
+s -> s: Сохранение матрицы
+s --> c: Ответ
+deactivate s
+c -> c: Структурирование матрицы
+c --> b: Игровое поле
+deactivate c
+
+b -> c: Заполнение ячейки матрицы
+activate c
+c -> s: Запрос на проверку ячейки
+activate s
+s --> c: Ответ
+deactivate s
+c --> b: Ответ
+deactivate c
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+
+actor "Пользователь" as b
+box "Клиент"
+  participant "Frontend" as c
+box end
+box "Сервер"
+    participant "Модуль статистики" as s
+box end
+box "Хранение данных"
+  database "База данных" as db
+box end
+
+b -> c: Запрос данных
+activate c
+c -> s: Запрос данных
+activate s
+s -> db: Запрос данных
+activate db
+
+db --> s: Ответ
+deactivate db
+s -> s: Формирование ответа
+s --> c: Ответ
+deactivate s
+c -> c: Структурирование ответа
+c --> b: Ответ
+deactivate c
+
+@enduml
