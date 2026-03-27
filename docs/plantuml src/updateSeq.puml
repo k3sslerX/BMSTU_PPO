@@ -1,0 +1,31 @@
+@startuml
+
+actor "Администратор" as b
+box "Клиент"
+  participant "Frontend" as c
+box end
+box "Сервер"
+    participant "Админ модуль" as s
+box end
+box "Хранение данных"
+  database "База данных" as db
+box end
+
+b -> c: Запрос на изменение данных
+activate c
+c -> s: Запрос на изменение данных
+activate s
+s -> db: Запрос на изменение данных
+activate db
+db -> db: Сохранение данных
+
+db --> s: Ответ
+deactivate db
+s -> s: Формирование ответа
+s --> c: Ответ
+deactivate s
+c -> c: Структурирование ответа
+c --> b: Ответ
+deactivate c
+
+@enduml

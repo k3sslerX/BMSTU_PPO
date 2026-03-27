@@ -1,0 +1,57 @@
+@startuml
+top to bottom direction
+package internal/core/game{
+annotation internal/core/game {
+
+
++NewShowGameUseCase(repo *Repository): *ShowGameUseCase
+}
+class ShowGameUseCase {
++Repo: *Repository
++Run(): *Game, error
+}
+}
+
+package internal/models{
+
+class Driver {
++ID: int
++Name: string
++Nationality: string
++BirthDate: Time
+
+}
+class DriverStats {
++Driver: Driver
++TotalRaces: int
++TotalWins: int
++TotalPodiums: int
++TotalPoints: int
++TotalPoles: int
++BestFinish: int
++BestQualifying: int
++ChampionshipWins: int
++BestChampionshipPosition: int
+
+}
+class Game {
++Conditions: []string
++Answers: [][][]Driver
+
+}
+
+}
+package internal/repository{
+class Repository {
++Pool: *Pool
++RequestGame(): *Game, error
+}
+}
+"ShowGameUseCase" --> "Repository"
+"ShowGameUseCase" --> "Game"
+"Repository" --> "Game"
+"Repository" --> "DriverStats"
+"Game" --> "Driver"
+"DriverStats" --> "Driver"
+
+@enduml

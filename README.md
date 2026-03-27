@@ -58,7 +58,7 @@ Web-Приложение, позволяющее отслеживать и ср�
  - Выбирает нужный пункт меню
  - Вводит подходящие значения на пересечениях условий
 
-## Формализация ключевых бизнес процессов
+## Формализация ключевых бизнес-процессов
 ### Просмотр статистики
 ![BPMNStat](/docs/images/BPMNStatReq.png)
 
@@ -67,3 +67,50 @@ Web-Приложение, позволяющее отслеживать и ср�
 
 ### Судоку-подобная игра
 ![BPMNSudoku](/docs/images/BPMNSudoku.png)
+
+## Описание типа приложения и стек
+Web PWA
+- Бекенд: Go
+- Фронтенд: Angular
+- СУБД: PostgreSQL
+
+Для взаимодействия фронтенда и бекенда используется REST API
+
+## C4
+
+### L1
+![C4L1](/docs/images/C4L1.svg)
+
+### L2
+![C4L2](/docs/images/C4L2.svg)
+
+### L3
+![C4L3](/docs/images/C4L3.svg)
+
+### L4
+#### Компонент доступа к данным
+![C4L4](/docs/images/C4L4Data.png)
+
+#### Компоненты бизнес-процессов
+
+##### Просмотр статистики
+![UMLSudoku](/docs/images/statsUML.png)
+
+##### Добавление/изменение данных
+![UMLAdm](/docs/images/updateUML.png)
+
+##### Судоку-подобная игра
+![UMLSudoku](/docs/images/gameUML.png)
+
+## Диграммы последовательностей
+### Просмотр статистики
+![statSeq](/docs/images/statsSeq.png)
+
+### Добавление/изменение данных
+![updateSeq](/docs/images/updateSeq.png)
+
+### Судоку-подобная игра
+![gameSeq](/docs/images/gameSeq.png)
+
+## DBML базы данных
+![DBML](/docs/images/DBML.png)

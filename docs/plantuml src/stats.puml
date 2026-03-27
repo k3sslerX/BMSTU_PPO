@@ -1,0 +1,80 @@
+@startuml
+top to bottom direction
+
+
+package internal/core/stats{
+annotation internal/core/stats {
+
+
++NewDriverStatsUseCase(driver Driver, repo *Repository): *DriverStatsUseCase
++NewTeamStatsUseCase(team Team, repo *Repository): *TeamStatsUseCase
+}
+class DriverStatsUseCase {
++Driver: Driver
++Repo: *Repository
++Run(): DriverStats, error
+}
+
+class TeamStatsUseCase {
++Team: Team
++Repo: *Repository
++Run(): TeamStats, error
+}
+}
+
+package internal/models{
+class Driver {
++ID: int
++Name: string
++Nationality: string
++BirthDate: Time
+}
+class DriverStats {
++Driver: Driver
++TotalRaces: int
++TotalWins: int
++TotalPodiums: int
++TotalPoints: int
++TotalPoles: int
++BestFinish: int
++BestQualifying: int
++ChampionshipWins: int
++BestChampionshipPosition: int
+}
+
+class Team {
++Id: int
++Name: string
++Country: string
+
+}
+class TeamStats {
++Team: Team
++TotalRaces: int
++TotalWins: int
++TotalPodiums: int
++TotalPoints: int
++TotalPoles: int
++BestFinish: int
++BestQualifying: int
++ChampionshipWins: int
++BestChampionshipPosition: int
+}
+}
+
+package internal/repository{
+class Repository {
++Pool: *Pool
++GetDriverStats(driver Driver): DriverStats, error
++GetTeamStats(team Team): TeamStats, error
+}
+}
+
+"DriverStatsUseCase" --> "Driver"
+"DriverStatsUseCase" --> "Repository"
+"TeamStatsUseCase" --> "Team"
+"TeamStatsUseCase" --> "Repository"
+"TeamStats" --> "Team"
+"DriverStats" --> "Driver"
+
+@enduml
