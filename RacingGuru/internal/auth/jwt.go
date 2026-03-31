@@ -41,7 +41,7 @@ func ParseToken(tokenString string) (models.User, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		if userID, ok := claims["user_id"].(string); ok {
 			if role, ok := claims["role"].(string); ok {
-				return models.User{Id: userID, Role: models.Role(role)}, nil
+				return models.User{Id: models.Uuid(userID), Role: models.Role(role)}, nil
 			}
 		}
 	}

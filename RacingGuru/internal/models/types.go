@@ -1,3 +1,3 @@
 package models
 
-type uuid string
+type Uuid string
