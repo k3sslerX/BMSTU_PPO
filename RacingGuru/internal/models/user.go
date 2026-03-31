@@ -6,7 +6,7 @@ const RoleAdmin Role = "admin"
 const RoleUser Role = "user"
 
 type User struct {
-	Id               uuid     `json:"id"`
+	Id               Uuid     `json:"id"`
 	Name             string   `json:"name"`
 	Password         string   `json:"password"`
 	Role             Role     `json:"role"`

@@ -1,5 +1,5 @@
 package models
 
 type Race struct {
-	Id uuid `json:"id"`
+	Id Uuid `json:"id"`
 }
