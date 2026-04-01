@@ -80,6 +80,38 @@ func TestConditionsCompatible(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "at least one win is incompatible with best finish outside top 3",
+			left: models.SudokuCondition{Field: "total_wins", Op: models.ConditionOperatorGTE, Value: 1},
+			right: models.SudokuCondition{
+				Field: "best_finish", Op: models.ConditionOperatorGT, Value: 3,
+			},
+			expected: false,
+		},
+		{
+			name: "no wins is incompatible with best finish win",
+			left: models.SudokuCondition{Field: "total_wins", Op: models.ConditionOperatorEQ, Value: 0},
+			right: models.SudokuCondition{
+				Field: "best_finish", Op: models.ConditionOperatorEQ, Value: 1,
+			},
+			expected: false,
+		},
+		{
+			name: "at least one podium is incompatible with best finish outside top 3",
+			left: models.SudokuCondition{Field: "total_podiums", Op: models.ConditionOperatorGTE, Value: 1},
+			right: models.SudokuCondition{
+				Field: "best_finish", Op: models.ConditionOperatorGT, Value: 3,
+			},
+			expected: false,
+		},
+		{
+			name: "at least one pole is incompatible with best qualifying outside top 3",
+			left: models.SudokuCondition{Field: "total_poles", Op: models.ConditionOperatorGTE, Value: 1},
+			right: models.SudokuCondition{
+				Field: "best_qualifying", Op: models.ConditionOperatorGT, Value: 3,
+			},
+			expected: false,
+		},
+		{
 			name: "overlapping same-field ranges are compatible",
 			left: models.SudokuCondition{Field: "best_finish", Op: models.ConditionOperatorLTE, Value: 3},
 			right: models.SudokuCondition{

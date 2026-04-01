@@ -111,13 +111,46 @@ func selectCompatibleConditions(
 }
 
 func conditionsCompatible(left models.SudokuCondition, right models.SudokuCondition) bool {
-	if left.Field != right.Field {
-		return true
+	if left.Field == right.Field {
+		leftRange := conditionRange(left)
+		rightRange := conditionRange(right)
+		return rangesIntersect(leftRange, rightRange)
 	}
 
-	leftRange := conditionRange(left)
-	rightRange := conditionRange(right)
-	return rangesIntersect(leftRange, rightRange)
+	return crossFieldConditionsCompatible(left, right) && crossFieldConditionsCompatible(right, left)
+}
+
+func crossFieldConditionsCompatible(source models.SudokuCondition, target models.SudokuCondition) bool {
+	switch source.Field {
+	case "total_wins":
+		if conditionRequiresAtLeast(source, 1) {
+			if target.Field == "best_finish" {
+				return rangesIntersect(conditionRange(target), valueRangeForExact(1))
+			}
+			if target.Field == "total_podiums" {
+				return rangesIntersect(conditionRange(target), valueRangeForAtLeast(1))
+			}
+		}
+		if conditionRequiresExactly(source, 0) && target.Field == "best_finish" {
+			return !rangesIntersect(conditionRange(target), valueRangeForExact(1))
+		}
+	case "total_podiums":
+		if conditionRequiresAtLeast(source, 1) && target.Field == "best_finish" {
+			return rangesIntersect(conditionRange(target), valueRangeForAtMost(3))
+		}
+		if conditionRequiresExactly(source, 0) && target.Field == "best_finish" {
+			return !rangesIntersect(conditionRange(target), valueRangeForAtMost(3))
+		}
+	case "total_poles":
+		if conditionRequiresAtLeast(source, 1) && target.Field == "best_qualifying" {
+			return rangesIntersect(conditionRange(target), valueRangeForExact(1))
+		}
+		if conditionRequiresExactly(source, 0) && target.Field == "best_qualifying" {
+			return !rangesIntersect(conditionRange(target), valueRangeForExact(1))
+		}
+	}
+
+	return true
 }
 
 type valueRange struct {
@@ -172,6 +205,67 @@ func conditionRange(condition models.SudokuCondition) valueRange {
 			maxInclusive: true,
 		}
 	}
+}
+
+func valueRangeForExact(value int) valueRange {
+	return valueRange{
+		min:          value,
+		max:          value,
+		minInclusive: true,
+		maxInclusive: true,
+	}
+}
+
+func valueRangeForAtLeast(value int) valueRange {
+	return valueRange{
+		min:          value,
+		max:          math.MaxInt,
+		minInclusive: true,
+		maxInclusive: true,
+	}
+}
+
+func valueRangeForAtMost(value int) valueRange {
+	return valueRange{
+		min:          math.MinInt,
+		max:          value,
+		minInclusive: true,
+		maxInclusive: true,
+	}
+}
+
+func conditionRequiresAtLeast(condition models.SudokuCondition, minValue int) bool {
+	conditionRange := conditionRange(condition)
+	requiredRange := valueRangeForAtLeast(minValue)
+	return rangeContains(conditionRange, requiredRange)
+}
+
+func conditionRequiresExactly(condition models.SudokuCondition, value int) bool {
+	return rangeContains(conditionRange(condition), valueRangeForExact(value))
+}
+
+func rangeContains(container valueRange, subset valueRange) bool {
+	return rangeCoversLowerBound(container, subset) && rangeCoversUpperBound(container, subset)
+}
+
+func rangeCoversLowerBound(container valueRange, subset valueRange) bool {
+	if container.min < subset.min {
+		return true
+	}
+	if container.min > subset.min {
+		return false
+	}
+	return container.minInclusive || !subset.minInclusive
+}
+
+func rangeCoversUpperBound(container valueRange, subset valueRange) bool {
+	if container.max > subset.max {
+		return true
+	}
+	if container.max < subset.max {
+		return false
+	}
+	return container.maxInclusive || !subset.maxInclusive
 }
 
 func rangesIntersect(left valueRange, right valueRange) bool {
