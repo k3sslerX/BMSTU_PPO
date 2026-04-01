@@ -10,20 +10,20 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-func (r *Repository) UserRegister(ctx context.Context, user models.User) error {
+func (r *Repository) UserRegister(ctx context.Context, user models.User) (models.User, error) {
 	var id string
 	row := r.Pool.QueryRow(ctx,
 		"SELECT id FROM users WHERE email = $1", user.Email)
 	err := row.Scan(&id)
 	if err == nil {
-		return shared.ErrorUserAlreadyExists
+		return models.User{}, shared.ErrorUserAlreadyExists
 	} else if !errors.Is(err, pgx.ErrNoRows) {
-		return err
+		return models.User{}, err
 	}
 	_, err = r.Pool.Exec(ctx,
 		"INSERT INTO users (id, name, email, password, role, created_at) VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)",
 		user.Name, user.Email, user.Password, user.Role, time.Now().UTC())
-	return err
+	return user, err
 }
 
 func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.User, error) {
