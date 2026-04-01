@@ -43,3 +43,11 @@ func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.Us
 
 	return user, nil
 }
+
+func (r *Repository) ToggleFavouriteDriver(context.Context, models.User, models.Driver) error {
+	return nil
+}
+
+func (r *Repository) ToggleFavouriteTeam(context.Context, models.User, models.Team) error {
+	return nil
+}
