@@ -5,14 +5,18 @@ import (
 	"RacingGuru/internal/shared"
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 )
 
 func TestGetDriverMatrixUseCase(t *testing.T) {
+	var matrix models.MatrixDrivers
 	var err error
 
 	testUc1 := NewGetDriverMatrixUseCase(&testRepo{returnError: false}, models.User{Role: models.RoleUser})
-	_, err = testUc1.Run(context.Background())
+	matrix, err = testUc1.Run(context.Background())
+	t.Log(formatDriverConditionMatrix(matrix))
 	if err != nil {
 		t.Error(err)
 	}
@@ -22,4 +26,26 @@ func TestGetDriverMatrixUseCase(t *testing.T) {
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}
+}
+
+func formatDriverConditionMatrix(matrix models.MatrixDrivers) string {
+	var sb strings.Builder
+
+	sb.WriteString("Driver condition matrix:\n")
+	sb.WriteString(fmt.Sprintf("      | %-35s | %-35s | %-35s |\n",
+		matrix.ConditionSpecs[0][0].Label,
+		matrix.ConditionSpecs[0][1].Label,
+		matrix.ConditionSpecs[0][2].Label,
+	))
+
+	for i := range matrix.ConditionSpecs[1] {
+		sb.WriteString(fmt.Sprintf("%-5s | %-35s | %-35s | %-35s |\n",
+			matrix.ConditionSpecs[1][i].Label,
+			"x",
+			"x",
+			"x",
+		))
+	}
+
+	return sb.String()
 }

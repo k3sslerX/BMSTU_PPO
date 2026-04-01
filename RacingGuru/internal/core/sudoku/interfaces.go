@@ -6,7 +6,6 @@ import (
 )
 
 type Repo interface {
-	GetDriverMatrix(context.Context) (models.MatrixDrivers, error)
-	GetTeamMatrix(context.Context) (models.MatrixTeams, error)
-	GetTrackMatrix(context.Context) (models.MatrixTracks, error)
+	GetDriverMatrix(context.Context, models.MatrixDrivers) (models.MatrixDrivers, error)
+	GetTeamMatrix(context.Context, models.MatrixTeams) (models.MatrixTeams, error)
 }
