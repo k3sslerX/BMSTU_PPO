@@ -7,38 +7,58 @@ import (
 )
 
 type testRepo struct {
-	favouriteDrivers map[string]bool
-	favouriteTeams   map[string]bool
-	lastDriverAction string
-	lastTeamAction   string
+	favouriteDrivers []favouriteDriverRow
+	favouriteTeams   []favouriteTeamRow
+}
+
+type favouriteDriverRow struct {
+	userID   models.Uuid
+	driverID models.Uuid
+}
+
+type favouriteTeamRow struct {
+	userID models.Uuid
+	teamID models.Uuid
 }
 
 func (repo *testRepo) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
-	if repo.favouriteDrivers == nil {
-		repo.favouriteDrivers = make(map[string]bool)
+	for i, row := range repo.favouriteDrivers {
+		if row.userID == user.Id && row.driverID == driver.Id {
+			repo.favouriteDrivers = append(repo.favouriteDrivers[:i], repo.favouriteDrivers[i+1:]...)
+			return nil
+		}
 	}
-	if repo.favouriteDrivers[driver.Id] {
-		delete(repo.favouriteDrivers, driver.Id)
-		repo.lastDriverAction = "removed"
-		return nil
-	}
-	repo.favouriteDrivers[driver.Id] = true
-	repo.lastDriverAction = "added"
+	repo.favouriteDrivers = append(repo.favouriteDrivers, favouriteDriverRow{userID: user.Id, driverID: driver.Id})
 	return nil
 }
 
 func (repo *testRepo) ToggleFavouriteTeam(ctx context.Context, user models.User, team models.Team) error {
-	if repo.favouriteTeams == nil {
-		repo.favouriteTeams = make(map[string]bool)
+	for i, row := range repo.favouriteTeams {
+		if row.userID == user.Id && row.teamID == team.Id {
+			repo.favouriteTeams = append(repo.favouriteTeams[:i], repo.favouriteTeams[i+1:]...)
+			return nil
+		}
 	}
-	if repo.favouriteTeams[team.Id] {
-		delete(repo.favouriteTeams, team.Id)
-		repo.lastTeamAction = "removed"
-		return nil
-	}
-	repo.favouriteTeams[team.Id] = true
-	repo.lastTeamAction = "added"
+	repo.favouriteTeams = append(repo.favouriteTeams, favouriteTeamRow{userID: user.Id, teamID: team.Id})
 	return nil
+}
+
+func (repo *testRepo) hasFavouriteDriver(userID, driverID models.Uuid) bool {
+	for _, row := range repo.favouriteDrivers {
+		if row.userID == userID && row.driverID == driverID {
+			return true
+		}
+	}
+	return false
+}
+
+func (repo *testRepo) hasFavouriteTeam(userID, teamID models.Uuid) bool {
+	for _, row := range repo.favouriteTeams {
+		if row.userID == userID && row.teamID == teamID {
+			return true
+		}
+	}
+	return false
 }
 
 func (repo *testRepo) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {

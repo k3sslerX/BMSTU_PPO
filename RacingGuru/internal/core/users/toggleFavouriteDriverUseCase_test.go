@@ -18,18 +18,18 @@ func TestToggleFavouriteDriverUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo1.favouriteDrivers["testId"] || repo1.lastDriverAction != "added" {
-		t.Error("expected driver to be added to favourites")
+	if !repo1.hasFavouriteDriver(models.Uuid("userId"), models.Uuid("testId")) {
+		t.Error("expected favourite_driver row to be inserted")
 	}
 
-	repo2 := &testRepo{favouriteDrivers: map[string]bool{"testId": true}}
+	repo2 := &testRepo{favouriteDrivers: []favouriteDriverRow{{userID: models.Uuid("userId"), driverID: models.Uuid("testId")}}}
 	testUc2 := NewToggleFavouriteDriverUseCase(repo2, user)
 	err = testUc2.Run(context.Background(), models.Driver{Id: "testId"})
 	if err != nil {
 		t.Error(err)
 	}
-	if repo2.favouriteDrivers["testId"] || repo2.lastDriverAction != "removed" {
-		t.Error("expected driver to be removed from favourites")
+	if repo2.hasFavouriteDriver(models.Uuid("userId"), models.Uuid("testId")) {
+		t.Error("expected favourite_driver row to be deleted")
 	}
 
 	repo3 := &testRepo{}
@@ -38,8 +38,8 @@ func TestToggleFavouriteDriverUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo3.favouriteDrivers["testId"] || repo3.lastDriverAction != "added" {
-		t.Error("expected named driver to be resolved and added to favourites")
+	if !repo3.hasFavouriteDriver(models.Uuid("userId"), models.Uuid("testId")) {
+		t.Error("expected resolved driver row to be inserted")
 	}
 
 	repo4 := &testRepo{}

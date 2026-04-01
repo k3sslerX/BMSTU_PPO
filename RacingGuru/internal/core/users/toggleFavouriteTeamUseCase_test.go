@@ -18,18 +18,18 @@ func TestToggleFavouriteTeamUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo1.favouriteTeams["testId"] || repo1.lastTeamAction != "added" {
-		t.Error("expected team to be added to favourites")
+	if !repo1.hasFavouriteTeam(models.Uuid("userId"), models.Uuid("testId")) {
+		t.Error("expected favourite_team row to be inserted")
 	}
 
-	repo2 := &testRepo{favouriteTeams: map[string]bool{"testId": true}}
+	repo2 := &testRepo{favouriteTeams: []favouriteTeamRow{{userID: models.Uuid("userId"), teamID: models.Uuid("testId")}}}
 	testUc2 := NewToggleFavouriteTeamUseCase(repo2, user)
 	err = testUc2.Run(context.Background(), models.Team{Id: "testId"})
 	if err != nil {
 		t.Error(err)
 	}
-	if repo2.favouriteTeams["testId"] || repo2.lastTeamAction != "removed" {
-		t.Error("expected team to be removed from favourites")
+	if repo2.hasFavouriteTeam(models.Uuid("userId"), models.Uuid("testId")) {
+		t.Error("expected favourite_team row to be deleted")
 	}
 
 	repo3 := &testRepo{}
@@ -38,8 +38,8 @@ func TestToggleFavouriteTeamUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo3.favouriteTeams["testId"] || repo3.lastTeamAction != "added" {
-		t.Error("expected named team to be resolved and added to favourites")
+	if !repo3.hasFavouriteTeam(models.Uuid("userId"), models.Uuid("testId")) {
+		t.Error("expected resolved team row to be inserted")
 	}
 
 	repo4 := &testRepo{}
