@@ -1,26 +1,34 @@
 @startuml
-top to bottom direction
-package internal/core/game{
-annotation internal/core/game {
 
-
-+NewShowGameUseCase(repo *Repository): *ShowGameUseCase
+package internal/core/sudoku{
+annotation internal/core/sudoku {
++NewGetDriverMatrixUseCase(repo Repo, user User): *GetDriverMatrixUseCase
++NewGetTeamMatrixUseCase(repo Repo, user User): *GetTeamMatrixUseCase
 }
-class ShowGameUseCase {
-+Repo: *Repository
-+Run(): *Game, error
+
+class GetDriverMatrixUseCase {
++Repo: Repo
++User: User
++Run(ctx Context): MatrixDrivers, error
+}
+
+class GetTeamMatrixUseCase {
++Repo: Repo
++User: User
++Run(ctx Context): MatrixTeams, error
 }
 }
 
 package internal/models{
 
 class Driver {
-+ID: int
++Id: Uuid
 +Name: string
++Birthday: string
 +Nationality: string
-+BirthDate: Time
 
 }
+
 class DriverStats {
 +Driver: Driver
 +TotalRaces: int
@@ -32,26 +40,66 @@ class DriverStats {
 +BestQualifying: int
 +ChampionshipWins: int
 +BestChampionshipPosition: int
+}
+
+class SudokuCondition {
++Label: string
++Field: string
++Op: ConditionOperator
++Value: int
 
 }
-class Game {
-+Conditions: []string
-+Answers: [][][]Driver
+class MatrixTeams {
++Field: [][][]Team
++ConditionSpecs: [][]SudokuCondition
 
+}
+
+class MatrixDrivers {
++Field: [][][]Driver
++ConditionSpecs: [][]SudokuCondition
+
+}
+
+class Team {
++Id: Uuid
++Name: string
++Country: string
+
+}
+class TeamStats {
++Team: Team
++TotalRaces: int
++TotalWins: int
++TotalPodiums: int
++TotalPoints: int
++TotalPoles: int
++BestFinish: int
++BestQualifying: int
++ChampionshipWins: int
++BestChampionshipPosition: int
 }
 
 }
 package internal/repository{
 class Repository {
 +Pool: *Pool
-+RequestGame(): *Game, error
++GetDriverStats(driver Driver): DriverStats, error
++GetTeamStats(team Team): TeamStats, error
 }
 }
-"ShowGameUseCase" --> "Repository"
-"ShowGameUseCase" --> "Game"
-"Repository" --> "Game"
-"Repository" --> "DriverStats"
-"Game" --> "Driver"
-"DriverStats" --> "Driver"
+
+"GetDriverMatrixUseCase" -d-> "MatrixDrivers"
+"GetTeamMatrixUseCase" -d-> "MatrixTeams"
+"MatrixDrivers" -d-> "Driver"
+"MatrixDrivers" -d-> "SudokuCondition"
+"MatrixTeams" -d-> "Team"
+"MatrixTeams" -d-> "SudokuCondition"
+"DriverStats" -d-> "Driver"
+"TeamStats" -d-> "Team"
+"GetDriverMatrixUseCase" -d-> "Repository"
+"GetTeamMatrixUseCase" -d-> "Repository"
+"Repository" -d-> "DriverStats"
+"Repository" -d-> "TeamStats"
 
 @enduml
