@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestDriverStatsUseCase(t *testing.T) {
@@ -20,7 +22,7 @@ func TestDriverStatsUseCase(t *testing.T) {
 	}
 
 	testUc2 := NewDriverStatsUseCase(repo, user)
-	_, err = testUc2.Run(context.Background(), models.Driver{Id: "testId"})
+	_, err = testUc2.Run(context.Background(), models.Driver{Id: testDriverID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,7 +34,7 @@ func TestDriverStatsUseCase(t *testing.T) {
 	}
 
 	testUc4 := NewDriverStatsUseCase(repo, user)
-	_, err = testUc4.Run(context.Background(), models.Driver{Id: "someId"})
+	_, err = testUc4.Run(context.Background(), models.Driver{Id: uuid.MustParse("33333333-3333-3333-3333-333333333333")})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

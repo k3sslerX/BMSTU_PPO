@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestCreateRaceUseCase(t *testing.T) {
@@ -13,19 +15,19 @@ func TestCreateRaceUseCase(t *testing.T) {
 	var err error
 
 	testUc1 := NewCreateRaceUseCase(repo, models.User{Role: models.RoleUser})
-	_, err = testUc1.Run(context.Background(), models.Race{Id: "testId"})
+	_, err = testUc1.Run(context.Background(), models.Race{Id: testRaceID})
 	if !errors.Is(err, shared.ErrorPermissionDenied) {
 		t.Error(err)
 	}
 
 	testUc2 := NewCreateRaceUseCase(repo, models.User{Role: models.RoleAdmin})
-	_, err = testUc2.Run(context.Background(), models.Race{Id: "testId"})
+	_, err = testUc2.Run(context.Background(), models.Race{Id: testRaceID})
 	if err != nil {
 		t.Error(err)
 	}
 
 	testUc3 := NewCreateRaceUseCase(repo, models.User{Role: models.RoleAdmin})
-	_, err = testUc3.Run(context.Background(), models.Race{Id: "someId"})
+	_, err = testUc3.Run(context.Background(), models.Race{Id: uuid.MustParse("66666666-6666-6666-6666-666666666666")})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

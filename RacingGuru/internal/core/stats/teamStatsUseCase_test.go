@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestTeamStatsUseCase(t *testing.T) {
@@ -20,7 +22,7 @@ func TestTeamStatsUseCase(t *testing.T) {
 	}
 
 	testUc2 := NewTeamStatsUseCase(repo, user)
-	_, err = testUc2.Run(context.Background(), models.Team{Id: "testId"})
+	_, err = testUc2.Run(context.Background(), models.Team{Id: testTeamID})
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,7 +34,7 @@ func TestTeamStatsUseCase(t *testing.T) {
 	}
 
 	testUc4 := NewTeamStatsUseCase(repo, user)
-	_, err = testUc4.Run(context.Background(), models.Team{Id: "someId"})
+	_, err = testUc4.Run(context.Background(), models.Team{Id: uuid.MustParse("44444444-4444-4444-4444-444444444444")})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

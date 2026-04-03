@@ -4,6 +4,8 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type ToggleFavouriteDriverUseCase struct {
@@ -16,13 +18,13 @@ func NewToggleFavouriteDriverUseCase(repo Repo, user models.User) *ToggleFavouri
 }
 
 func (uc *ToggleFavouriteDriverUseCase) Run(ctx context.Context, driver models.Driver) error {
-	if driver.Id == "" {
+	if driver.Id == uuid.Nil {
 		var err error
 		driver, err = uc.Repo.GetDriverByName(ctx, driver.Name)
 		if err != nil {
 			return err
 		}
-		if driver.Id == "" {
+		if driver.Id == uuid.Nil {
 			return shared.ErrorNotFound
 		}
 	}

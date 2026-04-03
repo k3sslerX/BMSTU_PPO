@@ -1,8 +1,14 @@
 package models
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
 type Driver struct {
-	Id          Uuid   `json:"id"`
-	Name        string `json:"name"`
-	Birthday    string `json:"birthday"`
-	Nationality string `json:"nationality"`
+	Id          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Birthday    time.Time `json:"birthday"`
+	Nationality string    `json:"nationality"`
 }

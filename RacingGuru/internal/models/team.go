@@ -1,7 +1,9 @@
 package models
 
+import "github.com/google/uuid"
+
 type Team struct {
-	Id      Uuid   `json:"id"`
-	Name    string `json:"name"`
-	Country string `json:"country"`
+	Id      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	Country string    `json:"country"`
 }
