@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func GenerateToken(userID, role string) (string, error) {
@@ -41,7 +42,11 @@ func ParseToken(tokenString string) (models.User, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		if userID, ok := claims["user_id"].(string); ok {
 			if role, ok := claims["role"].(string); ok {
-				return models.User{Id: models.Uuid(userID), Role: models.Role(role)}, nil
+				parsedUserID, err := uuid.Parse(userID)
+				if err != nil {
+					return models.User{}, shared.ErrorInvalidToken
+				}
+				return models.User{Id: parsedUserID, Role: models.Role(role)}, nil
 			}
 		}
 	}
