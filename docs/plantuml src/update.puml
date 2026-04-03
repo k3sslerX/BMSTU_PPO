@@ -3,9 +3,11 @@ top to bottom direction
 
 package internal/models{
 class User {
-+Id: int
-+Favourites: []Driver
-+Administrator: bool
++Id: uuid
++Name: string
++Role: UserRole
++FavouriteDrivers: []Driver
++FavouriteTeams: []Team
 }
 }
 package internal/repository{
