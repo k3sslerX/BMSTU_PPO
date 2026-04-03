@@ -13,12 +13,12 @@ type testRepo struct {
 
 type favouriteDriverRow struct {
 	userID   models.Uuid
-	driverID models.Uuid
+	driverID int
 }
 
 type favouriteTeamRow struct {
 	userID models.Uuid
-	teamID models.Uuid
+	teamID int
 }
 
 func (repo *testRepo) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
@@ -43,7 +43,7 @@ func (repo *testRepo) ToggleFavouriteTeam(ctx context.Context, user models.User,
 	return nil
 }
 
-func (repo *testRepo) hasFavouriteDriver(userID, driverID models.Uuid) bool {
+func (repo *testRepo) hasFavouriteDriver(userID models.Uuid, driverID int) bool {
 	for _, row := range repo.favouriteDrivers {
 		if row.userID == userID && row.driverID == driverID {
 			return true
@@ -52,7 +52,7 @@ func (repo *testRepo) hasFavouriteDriver(userID, driverID models.Uuid) bool {
 	return false
 }
 
-func (repo *testRepo) hasFavouriteTeam(userID, teamID models.Uuid) bool {
+func (repo *testRepo) hasFavouriteTeam(userID models.Uuid, teamID int) bool {
 	for _, row := range repo.favouriteTeams {
 		if row.userID == userID && row.teamID == teamID {
 			return true
@@ -63,14 +63,14 @@ func (repo *testRepo) hasFavouriteTeam(userID, teamID models.Uuid) bool {
 
 func (repo *testRepo) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {
 	if name == "testName" {
-		return models.Driver{Id: "testId", Name: "testName"}, nil
+		return models.Driver{Id: 1, Name: "testName"}, nil
 	}
 	return models.Driver{}, shared.ErrorNotFound
 }
 
 func (repo *testRepo) GetTeamByName(ctx context.Context, name string) (models.Team, error) {
 	if name == "testName" {
-		return models.Team{Id: "testId", Name: "testName"}, nil
+		return models.Team{Id: 1, Name: "testName"}, nil
 	}
 	return models.Team{}, shared.ErrorNotFound
 }

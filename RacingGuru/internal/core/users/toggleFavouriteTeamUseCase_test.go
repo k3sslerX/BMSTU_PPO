@@ -14,21 +14,21 @@ func TestToggleFavouriteTeamUseCase(t *testing.T) {
 
 	repo1 := &testRepo{}
 	testUc1 := NewToggleFavouriteTeamUseCase(repo1, user)
-	err = testUc1.Run(context.Background(), models.Team{Id: "testId"})
+	err = testUc1.Run(context.Background(), models.Team{Id: 1})
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo1.hasFavouriteTeam(models.Uuid("userId"), models.Uuid("testId")) {
+	if !repo1.hasFavouriteTeam(models.Uuid("userId"), 1) {
 		t.Error("expected favourite_team row to be inserted")
 	}
 
-	repo2 := &testRepo{favouriteTeams: []favouriteTeamRow{{userID: models.Uuid("userId"), teamID: models.Uuid("testId")}}}
+	repo2 := &testRepo{favouriteTeams: []favouriteTeamRow{{userID: models.Uuid("userId"), teamID: 1}}}
 	testUc2 := NewToggleFavouriteTeamUseCase(repo2, user)
-	err = testUc2.Run(context.Background(), models.Team{Id: "testId"})
+	err = testUc2.Run(context.Background(), models.Team{Id: 1})
 	if err != nil {
 		t.Error(err)
 	}
-	if repo2.hasFavouriteTeam(models.Uuid("userId"), models.Uuid("testId")) {
+	if repo2.hasFavouriteTeam(models.Uuid("userId"), 1) {
 		t.Error("expected favourite_team row to be deleted")
 	}
 
@@ -38,7 +38,7 @@ func TestToggleFavouriteTeamUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo3.hasFavouriteTeam(models.Uuid("userId"), models.Uuid("testId")) {
+	if !repo3.hasFavouriteTeam(models.Uuid("userId"), 1) {
 		t.Error("expected resolved team row to be inserted")
 	}
 

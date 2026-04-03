@@ -1,7 +1,7 @@
 package models
 
 type Track struct {
-	Id      Uuid   `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	Country string `json:"country"`
 	Length  int    `json:"length"`

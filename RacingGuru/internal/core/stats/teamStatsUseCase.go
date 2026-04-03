@@ -16,13 +16,13 @@ func NewTeamStatsUseCase(repo Repo, user models.User) *TeamStatsUseCase {
 }
 
 func (uc *TeamStatsUseCase) Run(ctx context.Context, team models.Team) (models.TeamStats, error) {
-	if team.Id == "" {
+	if team.Id <= 0 {
 		var err error
 		team, err = uc.Repo.GetTeamByName(ctx, team.Name)
 		if err != nil {
 			return models.TeamStats{}, err
 		}
-		if team.Id == "" {
+		if team.Id <= 0 {
 			return models.TeamStats{}, shared.ErrorNotFound
 		}
 	}

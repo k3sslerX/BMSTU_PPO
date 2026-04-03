@@ -20,7 +20,7 @@ func TestTeamStatsUseCase(t *testing.T) {
 	}
 
 	testUc2 := NewTeamStatsUseCase(repo, user)
-	_, err = testUc2.Run(context.Background(), models.Team{Id: "testId"})
+	_, err = testUc2.Run(context.Background(), models.Team{Id: 1})
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,7 +32,7 @@ func TestTeamStatsUseCase(t *testing.T) {
 	}
 
 	testUc4 := NewTeamStatsUseCase(repo, user)
-	_, err = testUc4.Run(context.Background(), models.Team{Id: "someId"})
+	_, err = testUc4.Run(context.Background(), models.Team{Id: 2})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

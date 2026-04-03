@@ -16,13 +16,13 @@ func NewToggleFavouriteTeamUseCase(repo Repo, user models.User) *ToggleFavourite
 }
 
 func (uc *ToggleFavouriteTeamUseCase) Run(ctx context.Context, team models.Team) error {
-	if team.Id == "" {
+	if team.Id <= 0 {
 		var err error
 		team, err = uc.Repo.GetTeamByName(ctx, team.Name)
 		if err != nil {
 			return err
 		}
-		if team.Id == "" {
+		if team.Id <= 0 {
 			return shared.ErrorNotFound
 		}
 	}

@@ -14,7 +14,8 @@ func (r *Repository) GetTeamStats(ctx context.Context, team models.Team) (models
 }
 
 func (r *Repository) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {
-	var id, birthday, nationality string
+	var id int
+	var birthday, nationality string
 	row := r.Pool.QueryRow(ctx,
 		"SELECT id, name, birthday, nationality FROM driver WHERE name like '%$1'", name)
 	err := row.Scan(&id, &name, &birthday, &nationality)
@@ -22,11 +23,12 @@ func (r *Repository) GetDriverByName(ctx context.Context, name string) (models.D
 		return models.Driver{}, err
 	}
 
-	return models.Driver{Id: models.Uuid(id), Name: name, Birthday: birthday, Nationality: nationality}, nil
+	return models.Driver{Id: id, Name: name, Birthday: birthday, Nationality: nationality}, nil
 }
 
 func (r *Repository) GetTeamByName(ctx context.Context, name string) (models.Team, error) {
-	var id, country string
+	var id int
+	var country string
 	row := r.Pool.QueryRow(ctx,
 		"SELECT id, name, country FROM team WHERE name like '%$1'", name)
 	err := row.Scan(&id, &name, &country)
@@ -34,5 +36,5 @@ func (r *Repository) GetTeamByName(ctx context.Context, name string) (models.Tea
 		return models.Team{}, err
 	}
 
-	return models.Team{Id: models.Uuid(id), Name: name, Country: country}, nil
+	return models.Team{Id: id, Name: name, Country: country}, nil
 }

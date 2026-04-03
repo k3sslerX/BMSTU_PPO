@@ -1,7 +1,7 @@
 package models
 
 type Team struct {
-	Id      Uuid   `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	Country string `json:"country"`
 }

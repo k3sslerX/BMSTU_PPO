@@ -20,7 +20,7 @@ func TestDriverStatsUseCase(t *testing.T) {
 	}
 
 	testUc2 := NewDriverStatsUseCase(repo, user)
-	_, err = testUc2.Run(context.Background(), models.Driver{Id: "testId"})
+	_, err = testUc2.Run(context.Background(), models.Driver{Id: 1})
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,7 +32,7 @@ func TestDriverStatsUseCase(t *testing.T) {
 	}
 
 	testUc4 := NewDriverStatsUseCase(repo, user)
-	_, err = testUc4.Run(context.Background(), models.Driver{Id: "someId"})
+	_, err = testUc4.Run(context.Background(), models.Driver{Id: 2})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

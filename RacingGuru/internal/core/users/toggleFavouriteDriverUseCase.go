@@ -16,13 +16,13 @@ func NewToggleFavouriteDriverUseCase(repo Repo, user models.User) *ToggleFavouri
 }
 
 func (uc *ToggleFavouriteDriverUseCase) Run(ctx context.Context, driver models.Driver) error {
-	if driver.Id == "" {
+	if driver.Id <= 0 {
 		var err error
 		driver, err = uc.Repo.GetDriverByName(ctx, driver.Name)
 		if err != nil {
 			return err
 		}
-		if driver.Id == "" {
+		if driver.Id <= 0 {
 			return shared.ErrorNotFound
 		}
 	}

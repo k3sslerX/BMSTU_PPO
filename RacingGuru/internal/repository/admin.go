@@ -9,27 +9,27 @@ import (
 
 func (r *Repository) CreateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
 	row := r.Pool.QueryRow(ctx,
-		"INSERT INTO driver (id, name, nationality, birthday) VALUES (uuid_generate_v4(), $1, $2, $3) RETURNING id",
+		"INSERT INTO driver (name, nationality, birthday) VALUES ($1, $2, $3) RETURNING id",
 		driver.Name, driver.Nationality, driver.Birthday)
-	var id string
+	var id int
 	err := row.Scan(&id)
 	if err != nil {
 		return driver, err
 	}
-	driver.Id = models.Uuid(id)
+	driver.Id = id
 	return driver, err
 }
 
 func (r *Repository) CreateTeam(ctx context.Context, team models.Team) (models.Team, error) {
 	row := r.Pool.QueryRow(ctx,
-		"INSERT INTO team (id, name, country) VALUES (uuid_generate_v4(), $1, $2) RETURNING id",
+		"INSERT INTO team (name, country) VALUES ($1, $2) RETURNING id",
 		team.Name, team.Country)
-	var id string
+	var id int
 	err := row.Scan(&id)
 	if err != nil {
 		return team, err
 	}
-	team.Id = models.Uuid(id)
+	team.Id = id
 	return team, nil
 }
 
@@ -38,11 +38,11 @@ func (r *Repository) CreateRace(ctx context.Context, race models.Race) (models.R
 }
 
 func (r *Repository) UpdateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
-	if driver.Id == "" || (driver.Name == "" && driver.Nationality == "" && driver.Birthday == "") {
+	if driver.Id <= 0 || (driver.Name == "" && driver.Nationality == "" && driver.Birthday == "") {
 		return driver, shared.ErrorInvalidData
 	}
 	sqlString := "UPDATE driver SET "
-	fields := make([]string, 0)
+	fields := make([]any, 0)
 	sep := false
 	cnt := 1
 	if driver.Name != "" {
@@ -70,8 +70,8 @@ func (r *Repository) UpdateDriver(ctx context.Context, driver models.Driver) (mo
 		cnt++
 	}
 	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, string(driver.Id))
-	_, err := r.Pool.Exec(ctx, sqlString, fields)
+	fields = append(fields, driver.Id)
+	_, err := r.Pool.Exec(ctx, sqlString, fields...)
 	if err != nil {
 		return driver, err
 	}
@@ -79,11 +79,11 @@ func (r *Repository) UpdateDriver(ctx context.Context, driver models.Driver) (mo
 }
 
 func (r *Repository) UpdateTeam(ctx context.Context, team models.Team) (models.Team, error) {
-	if team.Id == "" || (team.Name == "" && team.Country == "") {
+	if team.Id <= 0 || (team.Name == "" && team.Country == "") {
 		return team, shared.ErrorInvalidData
 	}
 	sqlString := "UPDATE team SET "
-	fields := make([]string, 0)
+	fields := make([]any, 0)
 	sep := false
 	cnt := 1
 	if team.Name != "" {
@@ -102,8 +102,8 @@ func (r *Repository) UpdateTeam(ctx context.Context, team models.Team) (models.T
 		cnt++
 	}
 	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, string(team.Id))
-	_, err := r.Pool.Exec(ctx, sqlString, fields)
+	fields = append(fields, team.Id)
+	_, err := r.Pool.Exec(ctx, sqlString, fields...)
 	if err != nil {
 		return team, err
 	}

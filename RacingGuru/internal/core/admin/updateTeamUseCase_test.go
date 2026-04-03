@@ -13,19 +13,19 @@ func TestUpdateTeamUseCase(t *testing.T) {
 	var err error
 
 	testUc1 := NewUpdateTeamUseCase(repo, models.User{Role: models.RoleUser})
-	_, err = testUc1.Run(context.Background(), models.Team{Id: "testId"})
+	_, err = testUc1.Run(context.Background(), models.Team{Id: 1})
 	if !errors.Is(err, shared.ErrorPermissionDenied) {
 		t.Error(err)
 	}
 
 	testUc2 := NewUpdateTeamUseCase(repo, models.User{Role: models.RoleAdmin})
-	_, err = testUc2.Run(context.Background(), models.Team{Id: "testId"})
+	_, err = testUc2.Run(context.Background(), models.Team{Id: 1})
 	if err != nil {
 		t.Error(err)
 	}
 
 	testUc3 := NewUpdateTeamUseCase(repo, models.User{Role: models.RoleAdmin})
-	_, err = testUc3.Run(context.Background(), models.Team{Id: "someId"})
+	_, err = testUc3.Run(context.Background(), models.Team{Id: 2})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}
