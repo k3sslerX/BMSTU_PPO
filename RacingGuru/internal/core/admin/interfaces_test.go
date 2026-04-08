@@ -32,6 +32,32 @@ func (repo *testRepo) CreateRace(ctx context.Context, race models.Race) (models.
 	return models.Race{}, shared.ErrorNotFound
 }
 
+func (repo *testRepo) UpsertRaceResult(ctx context.Context, result models.RaceResult) (models.RaceResult, error) {
+	if result.RaceID == uuid.MustParse("33333333-3333-3333-3333-333333333333") &&
+		result.CarParticipantID == uuid.MustParse("55555555-5555-5555-5555-555555555555") {
+		return result, nil
+	}
+	return models.RaceResult{}, shared.ErrorNotFound
+}
+
+func (repo *testRepo) CreateTrack(ctx context.Context, track models.Track) (models.Track, error) {
+	if track.Name == "testName" {
+		return models.Track{Id: uuid.MustParse("44444444-4444-4444-4444-444444444444"), Name: "testName"}, nil
+	}
+	return models.Track{}, shared.ErrorNotFound
+}
+
+func (repo *testRepo) CreateCarParticipant(ctx context.Context, carParticipant models.CarParticipant) (models.CarParticipant, error) {
+	if carParticipant.Number == "7" {
+		return models.CarParticipant{
+			Id:      uuid.MustParse("66666666-6666-6666-6666-666666666666"),
+			Number:  "7",
+			Drivers: carParticipant.Drivers,
+		}, nil
+	}
+	return models.CarParticipant{}, shared.ErrorNotFound
+}
+
 func (repo *testRepo) UpdateRace(ctx context.Context, race models.Race) (models.Race, error) {
 	if race.Id == uuid.MustParse("33333333-3333-3333-3333-333333333333") {
 		return models.Race{Id: uuid.MustParse("33333333-3333-3333-3333-333333333333")}, nil
@@ -44,6 +70,27 @@ func (repo *testRepo) UpdateTeam(ctx context.Context, team models.Team) (models.
 		return models.Team{Id: uuid.MustParse("22222222-2222-2222-2222-222222222222"), Name: "testName"}, nil
 	}
 	return models.Team{}, shared.ErrorNotFound
+}
+
+func (repo *testRepo) UpdateTrack(ctx context.Context, track models.Track) (models.Track, error) {
+	if track.Id == uuid.MustParse("44444444-4444-4444-4444-444444444444") {
+		return models.Track{Id: uuid.MustParse("44444444-4444-4444-4444-444444444444"), Name: "testName"}, nil
+	}
+	return models.Track{}, shared.ErrorNotFound
+}
+
+func (repo *testRepo) UpdateCarParticipant(ctx context.Context, carParticipant models.CarParticipant) (models.CarParticipant, error) {
+	if carParticipant.Id == uuid.MustParse("66666666-6666-6666-6666-666666666666") {
+		return models.CarParticipant{Id: uuid.MustParse("66666666-6666-6666-6666-666666666666"), Number: "7"}, nil
+	}
+	return models.CarParticipant{}, shared.ErrorNotFound
+}
+
+func (repo *testRepo) UpdateCarParticipantDrivers(ctx context.Context, carParticipant models.CarParticipant) (models.CarParticipant, error) {
+	if carParticipant.Id == uuid.MustParse("66666666-6666-6666-6666-666666666666") {
+		return carParticipant, nil
+	}
+	return models.CarParticipant{}, shared.ErrorNotFound
 }
 
 func (repo *testRepo) UpdateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
