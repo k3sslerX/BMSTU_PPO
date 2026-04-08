@@ -30,7 +30,7 @@ func (r *Repository) UserRegister(ctx context.Context, user models.User) (models
 func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.User, error) {
 	var id, name, password, role string
 	row := r.Pool.QueryRow(ctx,
-		"SELECT id, name, password, role FROM users WHERE email = $1", user.Email)
+		"SELECT id, name, passwordHash, role FROM users WHERE email = $1", user.Email)
 	err := row.Scan(&id, &name, &password, &role)
 	if err != nil {
 		return user, err
