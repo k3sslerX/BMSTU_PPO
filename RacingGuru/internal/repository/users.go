@@ -49,10 +49,52 @@ func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.Us
 	return user, nil
 }
 
-func (r *Repository) ToggleFavouriteDriver(context.Context, models.User, models.Driver) error {
-	return nil
+func (r *Repository) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
+	var exists bool
+	err := r.Pool.QueryRow(ctx,
+		"SELECT EXISTS(SELECT 1 FROM favourite_drivers WHERE user_id = $1 AND driver = $2)",
+		user.Id, driver.Id,
+	).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		_, err = r.Pool.Exec(ctx,
+			"DELETE FROM favourite_drivers WHERE user_id = $1 AND driver = $2",
+			user.Id, driver.Id,
+		)
+		return err
+	}
+
+	_, err = r.Pool.Exec(ctx,
+		"INSERT INTO favourite_drivers (user_id, driver) VALUES ($1, $2)",
+		user.Id, driver.Id,
+	)
+	return err
 }
 
-func (r *Repository) ToggleFavouriteTeam(context.Context, models.User, models.Team) error {
-	return nil
+func (r *Repository) ToggleFavouriteTeam(ctx context.Context, user models.User, team models.Team) error {
+	var exists bool
+	err := r.Pool.QueryRow(ctx,
+		"SELECT EXISTS(SELECT 1 FROM favourite_teams WHERE user_id = $1 AND team = $2)",
+		user.Id, team.Id,
+	).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		_, err = r.Pool.Exec(ctx,
+			"DELETE FROM favourite_teams WHERE user_id = $1 AND team = $2",
+			user.Id, team.Id,
+		)
+		return err
+	}
+
+	_, err = r.Pool.Exec(ctx,
+		"INSERT INTO favourite_teams (user_id, team) VALUES ($1, $2)",
+		user.Id, team.Id,
+	)
+	return err
 }
