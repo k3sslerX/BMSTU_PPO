@@ -8,11 +8,39 @@ import (
 )
 
 func (r *Repository) GetDriverStats(ctx context.Context, driver models.Driver) (models.DriverStats, error) {
-	return models.DriverStats{}, nil
+	driverStats := models.DriverStats{}
+	driverStats.Driver = driver
+	stats := models.Stats{}
+	row := r.Pool.QueryRow(ctx,
+		"SELECT total_races, total_wins, total_podiums, total_points, total_poles "+
+			"best_finish, best_qualifying, championship_wins, best_championship_position "+
+			"FROM CalculateDriverStats($1)", driver.Id)
+	err := row.Scan(&stats.TotalRaces, &stats.TotalWins, &stats.TotalPodiums, &stats.TotalPoints, &stats.TotalPoles,
+		&stats.BestFinish, &stats.BestQualifying, &stats.ChampionshipsWins, &stats.BestChampionshipPosition)
+	if err != nil {
+		return driverStats, err
+	}
+	driverStats.Stats = stats
+
+	return driverStats, nil
 }
 
 func (r *Repository) GetTeamStats(ctx context.Context, team models.Team) (models.TeamStats, error) {
-	return models.TeamStats{}, nil
+	teamStats := models.TeamStats{}
+	teamStats.Team = team
+	stats := models.Stats{}
+	row := r.Pool.QueryRow(ctx,
+		"SELECT total_races, total_wins, total_podiums, total_points, total_poles "+
+			"best_finish, best_qualifying, championship_wins, best_championship_position "+
+			"FROM CalculateTeamStats($1)", team.Id)
+	err := row.Scan(&stats.TotalRaces, &stats.TotalWins, &stats.TotalPodiums, &stats.TotalPoints, &stats.TotalPoles,
+		&stats.BestFinish, &stats.BestQualifying, &stats.ChampionshipsWins, &stats.BestChampionshipPosition)
+	if err != nil {
+		return teamStats, err
+	}
+	teamStats.Stats = stats
+
+	return teamStats, nil
 }
 
 func (r *Repository) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {
