@@ -4,6 +4,8 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type testRepo struct {
@@ -12,13 +14,13 @@ type testRepo struct {
 }
 
 type favouriteDriverRow struct {
-	userID   models.Uuid
-	driverID int
+	userID   uuid.UUID
+	driverID uuid.UUID
 }
 
 type favouriteTeamRow struct {
-	userID models.Uuid
-	teamID int
+	userID uuid.UUID
+	teamID uuid.UUID
 }
 
 func (repo *testRepo) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
@@ -43,7 +45,7 @@ func (repo *testRepo) ToggleFavouriteTeam(ctx context.Context, user models.User,
 	return nil
 }
 
-func (repo *testRepo) hasFavouriteDriver(userID models.Uuid, driverID int) bool {
+func (repo *testRepo) hasFavouriteDriver(userID uuid.UUID, driverID uuid.UUID) bool {
 	for _, row := range repo.favouriteDrivers {
 		if row.userID == userID && row.driverID == driverID {
 			return true
@@ -52,7 +54,7 @@ func (repo *testRepo) hasFavouriteDriver(userID models.Uuid, driverID int) bool 
 	return false
 }
 
-func (repo *testRepo) hasFavouriteTeam(userID models.Uuid, teamID int) bool {
+func (repo *testRepo) hasFavouriteTeam(userID uuid.UUID, teamID uuid.UUID) bool {
 	for _, row := range repo.favouriteTeams {
 		if row.userID == userID && row.teamID == teamID {
 			return true
@@ -63,14 +65,14 @@ func (repo *testRepo) hasFavouriteTeam(userID models.Uuid, teamID int) bool {
 
 func (repo *testRepo) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {
 	if name == "testName" {
-		return models.Driver{Id: 1, Name: "testName"}, nil
+		return models.Driver{Id: uuid.MustParse("11111111-1111-1111-1111-111111111111"), Name: "testName"}, nil
 	}
 	return models.Driver{}, shared.ErrorNotFound
 }
 
 func (repo *testRepo) GetTeamByName(ctx context.Context, name string) (models.Team, error) {
 	if name == "testName" {
-		return models.Team{Id: 1, Name: "testName"}, nil
+		return models.Team{Id: uuid.MustParse("22222222-2222-2222-2222-222222222222"), Name: "testName"}, nil
 	}
 	return models.Team{}, shared.ErrorNotFound
 }

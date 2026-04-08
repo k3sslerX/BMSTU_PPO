@@ -3,6 +3,8 @@ package repository
 import (
 	"RacingGuru/internal/models"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 func (r *Repository) GetDriverStats(ctx context.Context, driver models.Driver) (models.DriverStats, error) {
@@ -14,7 +16,7 @@ func (r *Repository) GetTeamStats(ctx context.Context, team models.Team) (models
 }
 
 func (r *Repository) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {
-	var id int
+	var id uuid.UUID
 	var birthday, nationality string
 	row := r.Pool.QueryRow(ctx,
 		"SELECT id, name, birthday, nationality FROM driver WHERE name like '%$1'", name)
@@ -27,7 +29,7 @@ func (r *Repository) GetDriverByName(ctx context.Context, name string) (models.D
 }
 
 func (r *Repository) GetTeamByName(ctx context.Context, name string) (models.Team, error) {
-	var id int
+	var id uuid.UUID
 	var country string
 	row := r.Pool.QueryRow(ctx,
 		"SELECT id, name, country FROM team WHERE name like '%$1'", name)

@@ -5,13 +5,15 @@ import (
 	"RacingGuru/internal/shared"
 	"context"
 	"strconv"
+
+	"github.com/google/uuid"
 )
 
 func (r *Repository) CreateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
 	row := r.Pool.QueryRow(ctx,
 		"INSERT INTO driver (name, nationality, birthday) VALUES ($1, $2, $3) RETURNING id",
 		driver.Name, driver.Nationality, driver.Birthday)
-	var id int
+	var id uuid.UUID
 	err := row.Scan(&id)
 	if err != nil {
 		return driver, err
@@ -24,7 +26,7 @@ func (r *Repository) CreateTeam(ctx context.Context, team models.Team) (models.T
 	row := r.Pool.QueryRow(ctx,
 		"INSERT INTO team (name, country) VALUES ($1, $2) RETURNING id",
 		team.Name, team.Country)
-	var id int
+	var id uuid.UUID
 	err := row.Scan(&id)
 	if err != nil {
 		return team, err
@@ -38,7 +40,7 @@ func (r *Repository) CreateRace(ctx context.Context, race models.Race) (models.R
 }
 
 func (r *Repository) UpdateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
-	if driver.Id <= 0 || (driver.Name == "" && driver.Nationality == "" && driver.Birthday == "") {
+	if driver.Id == uuid.Nil || (driver.Name == "" && driver.Nationality == "" && driver.Birthday == "") {
 		return driver, shared.ErrorInvalidData
 	}
 	sqlString := "UPDATE driver SET "
@@ -79,7 +81,7 @@ func (r *Repository) UpdateDriver(ctx context.Context, driver models.Driver) (mo
 }
 
 func (r *Repository) UpdateTeam(ctx context.Context, team models.Team) (models.Team, error) {
-	if team.Id <= 0 || (team.Name == "" && team.Country == "") {
+	if team.Id == uuid.Nil || (team.Name == "" && team.Country == "") {
 		return team, shared.ErrorInvalidData
 	}
 	sqlString := "UPDATE team SET "

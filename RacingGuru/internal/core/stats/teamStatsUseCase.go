@@ -4,6 +4,8 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type TeamStatsUseCase struct {
@@ -16,13 +18,13 @@ func NewTeamStatsUseCase(repo Repo, user models.User) *TeamStatsUseCase {
 }
 
 func (uc *TeamStatsUseCase) Run(ctx context.Context, team models.Team) (models.TeamStats, error) {
-	if team.Id <= 0 {
+	if team.Id == uuid.Nil {
 		var err error
 		team, err = uc.Repo.GetTeamByName(ctx, team.Name)
 		if err != nil {
 			return models.TeamStats{}, err
 		}
-		if team.Id <= 0 {
+		if team.Id == uuid.Nil {
 			return models.TeamStats{}, shared.ErrorNotFound
 		}
 	}

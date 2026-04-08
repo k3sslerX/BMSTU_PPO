@@ -7,6 +7,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -37,7 +38,11 @@ func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.Us
 	if password != user.Password {
 		return user, shared.ErrorIncorrectPassword
 	}
-	user.Id = models.Uuid(id)
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return user, err
+	}
+	user.Id = userID
 	user.Name = name
 	user.Role = models.Role(role)
 

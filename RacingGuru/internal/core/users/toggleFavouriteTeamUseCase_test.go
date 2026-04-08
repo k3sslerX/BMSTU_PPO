@@ -6,29 +6,33 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/google/uuid"
 )
+
+var testFavouriteTeamID = uuid.MustParse("22222222-2222-2222-2222-222222222222")
 
 func TestToggleFavouriteTeamUseCase(t *testing.T) {
 	var err error
-	user := models.User{Id: "userId", Role: models.RoleUser}
+	user := models.User{Id: testFavouriteUserID, Role: models.RoleUser}
 
 	repo1 := &testRepo{}
 	testUc1 := NewToggleFavouriteTeamUseCase(repo1, user)
-	err = testUc1.Run(context.Background(), models.Team{Id: 1})
+	err = testUc1.Run(context.Background(), models.Team{Id: testFavouriteTeamID})
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo1.hasFavouriteTeam(models.Uuid("userId"), 1) {
+	if !repo1.hasFavouriteTeam(testFavouriteUserID, testFavouriteTeamID) {
 		t.Error("expected favourite_team row to be inserted")
 	}
 
-	repo2 := &testRepo{favouriteTeams: []favouriteTeamRow{{userID: models.Uuid("userId"), teamID: 1}}}
+	repo2 := &testRepo{favouriteTeams: []favouriteTeamRow{{userID: testFavouriteUserID, teamID: testFavouriteTeamID}}}
 	testUc2 := NewToggleFavouriteTeamUseCase(repo2, user)
-	err = testUc2.Run(context.Background(), models.Team{Id: 1})
+	err = testUc2.Run(context.Background(), models.Team{Id: testFavouriteTeamID})
 	if err != nil {
 		t.Error(err)
 	}
-	if repo2.hasFavouriteTeam(models.Uuid("userId"), 1) {
+	if repo2.hasFavouriteTeam(testFavouriteUserID, testFavouriteTeamID) {
 		t.Error("expected favourite_team row to be deleted")
 	}
 
@@ -38,7 +42,7 @@ func TestToggleFavouriteTeamUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo3.hasFavouriteTeam(models.Uuid("userId"), 1) {
+	if !repo3.hasFavouriteTeam(testFavouriteUserID, testFavouriteTeamID) {
 		t.Error("expected resolved team row to be inserted")
 	}
 
