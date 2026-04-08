@@ -22,7 +22,7 @@ func (r *Repository) UserRegister(ctx context.Context, user models.User) (models
 		return models.User{}, err
 	}
 	_, err = r.Pool.Exec(ctx,
-		"INSERT INTO users (id, name, email, password, role, created_at) VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)",
+		"INSERT INTO users (id, name, email, passwordHash, role, created_at) VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)",
 		user.Name, user.Email, user.Password, user.Role, time.Now().UTC())
 	return user, err
 }
