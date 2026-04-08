@@ -473,7 +473,7 @@ func replaceCarParticipantDrivers(
 			return shared.ErrorInvalidData
 		}
 		if _, err := tx.Exec(ctx,
-			"INSERT INTO team_p (id, car_p, driver) VALUES (uuid_generate_v4(), $1, $2)",
+			"INSERT INTO team_p (car_p, driver) VALUES ($1, $2)",
 			carParticipantID, driver.Id); err != nil {
 			return err
 		}
