@@ -10,11 +10,10 @@ import (
 
 type DriverStatsUseCase struct {
 	Repo Repo
-	User models.User
 }
 
-func NewDriverStatsUseCase(repo Repo, user models.User) *DriverStatsUseCase {
-	return &DriverStatsUseCase{Repo: repo, User: user}
+func NewDriverStatsUseCase(repo Repo) *DriverStatsUseCase {
+	return &DriverStatsUseCase{Repo: repo}
 }
 
 func (uc *DriverStatsUseCase) Run(ctx context.Context, driver models.Driver) (models.DriverStats, error) {

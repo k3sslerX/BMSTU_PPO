@@ -10,11 +10,10 @@ import (
 
 type TeamStatsUseCase struct {
 	Repo Repo
-	User models.User
 }
 
-func NewTeamStatsUseCase(repo Repo, user models.User) *TeamStatsUseCase {
-	return &TeamStatsUseCase{Repo: repo, User: user}
+func NewTeamStatsUseCase(repo Repo) *TeamStatsUseCase {
+	return &TeamStatsUseCase{Repo: repo}
 }
 
 func (uc *TeamStatsUseCase) Run(ctx context.Context, team models.Team) (models.TeamStats, error) {
