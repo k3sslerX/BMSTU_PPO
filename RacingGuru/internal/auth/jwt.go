@@ -10,9 +10,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateToken(userID, role string) (string, error) {
+func GenerateToken(user models.User) (string, error) {
 	//secretKey := os.Getenv("JWT_SECRET_KEY")
 	secretKey := "secretKey"
+	userID := user.Id.String()
+	role := string(user.Role)
 
 	claims := jwt.MapClaims{
 		"user_id": userID,

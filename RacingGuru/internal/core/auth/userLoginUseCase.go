@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"RacingGuru/internal/auth"
 	"RacingGuru/internal/models"
 	"context"
 )
@@ -13,6 +14,14 @@ func NewUserLoginUseCase(repo Repo) *UserLoginUseCase {
 	return &UserLoginUseCase{Repo: repo}
 }
 
-func (uc UserLoginUseCase) Run(ctx context.Context, user models.User) (models.User, error) {
-	return uc.Repo.UserLogin(ctx, user)
+func (uc UserLoginUseCase) Run(ctx context.Context, user models.User) (string, error) {
+	authUser, err := uc.Repo.UserLogin(ctx, user)
+	if err != nil {
+		return "", err
+	}
+	token, err := auth.GenerateToken(authUser)
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }
