@@ -29,18 +29,19 @@ func (h *Handler) Routes() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
 
+	r.HandleFunc("/", h.Info)
+
 	r.Post("/login", h.Login)
 	r.Post("/register", h.Register)
 
-	r.HandleFunc("/", h.Info)
+	r.Route("/stats", func(r chi.Router) {
+		r.Get("/driver", h.StatsDriver)
+		r.Get("/team", h.StatsTeam)
+	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware)
 
-		r.Route("/stats", func(r chi.Router) {
-			r.Get("/driver", h.StatsDriver)
-			r.Get("/team", h.StatsTeam)
-		})
 	})
 
 	return r
