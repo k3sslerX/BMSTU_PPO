@@ -30,6 +30,8 @@ func (h *Handler) Routes() http.Handler {
 	r.Use(middleware.RequestID)
 
 	r.HandleFunc("/", h.Info)
+	r.Get("/swagger.yaml", h.SwaggerSpec)
+	r.Get("/docs", h.SwaggerUI)
 
 	r.Post("/login", h.Login)
 	r.Post("/register", h.Register)
@@ -57,6 +59,11 @@ func (h *Handler) sendError(w http.ResponseWriter, message, code string, status 
 	_ = json.NewEncoder(w).Encode(response)
 }
 
+// Info godoc
+// @Summary Health check
+// @Tags system
+// @Success 200
+// @Router / [get]
 func (h *Handler) Info(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }

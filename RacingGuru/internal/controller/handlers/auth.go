@@ -15,6 +15,16 @@ type tokenS struct {
 	Token string `json:"token"`
 }
 
+// Login godoc
+// @Summary User login
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login payload"
+// @Success 200 {object} tokenS
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
@@ -43,6 +53,16 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(tokenS{token})
 }
 
+// Register godoc
+// @Summary User registration
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "Registration payload"
+// @Success 201 {object} models.User
+// @Failure 400 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {

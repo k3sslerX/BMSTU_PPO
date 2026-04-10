@@ -9,6 +9,17 @@ import (
 	"github.com/google/uuid"
 )
 
+// StatsDriver godoc
+// @Summary Driver statistics
+// @Tags stats
+// @Produce json
+// @Param driver_id query string true "Driver UUID" format(uuid)
+// @Success 200 {object} DriverStatsResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /stats/driver [get]
 func (h *Handler) StatsDriver(w http.ResponseWriter, r *http.Request) {
 	//user, ok := getUserFromContext(r.Context())
 	//if !ok {
@@ -36,12 +47,21 @@ func (h *Handler) StatsDriver(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	wrapper := struct {
-		Stats models.DriverStats `json:"driver_stats"`
-	}{dStats}
+	wrapper := DriverStatsResponse{Stats: dStats}
 	_ = json.NewEncoder(w).Encode(wrapper)
 }
 
+// StatsTeam godoc
+// @Summary Team statistics
+// @Tags stats
+// @Produce json
+// @Param team_id query string true "Team UUID" format(uuid)
+// @Success 200 {object} TeamStatsResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /stats/team [get]
 func (h *Handler) StatsTeam(w http.ResponseWriter, r *http.Request) {
 	//user, ok := getUserFromContext(r.Context())
 	//if !ok {
@@ -69,8 +89,6 @@ func (h *Handler) StatsTeam(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	wrapper := struct {
-		Stats models.TeamStats `json:"team_stats"`
-	}{tStats}
+	wrapper := TeamStatsResponse{Stats: tStats}
 	_ = json.NewEncoder(w).Encode(wrapper)
 }

@@ -1,0 +1,306 @@
+basePath: /
+definitions:
+  handlers.DriverStatsResponse:
+    properties:
+      driver_stats:
+        $ref: '#/definitions/models.DriverStats'
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        properties:
+          code:
+            type: string
+          message:
+            type: string
+        type: object
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: secret123
+        type: string
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: Max Verstappen
+        type: string
+      password:
+        example: secret123
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.Role'
+        enum:
+        - admin
+        - user
+        example: user
+    type: object
+  handlers.TeamStatsResponse:
+    properties:
+      team_stats:
+        $ref: '#/definitions/models.TeamStats'
+    type: object
+  handlers.tokenS:
+    properties:
+      token:
+        type: string
+    type: object
+  models.Driver:
+    properties:
+      birthday:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      nationality:
+        type: string
+    type: object
+  models.DriverStats:
+    properties:
+      driver:
+        $ref: '#/definitions/models.Driver'
+      stats:
+        $ref: '#/definitions/models.Stats'
+    type: object
+  models.Role:
+    enum:
+    - admin
+    - user
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleUser
+  models.Stats:
+    properties:
+      best_championship_position:
+        type: integer
+      best_finish:
+        type: integer
+      best_qualifying:
+        type: integer
+      championships_wins:
+        type: integer
+      total_podiums:
+        type: integer
+      total_points:
+        type: integer
+      total_poles:
+        type: integer
+      total_races:
+        type: integer
+      total_wins:
+        type: integer
+    type: object
+  models.Team:
+    properties:
+      country:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  models.TeamStats:
+    properties:
+      stats:
+        $ref: '#/definitions/models.Stats'
+      team:
+        $ref: '#/definitions/models.Team'
+    type: object
+  models.User:
+    properties:
+      email:
+        type: string
+      favourite_driers:
+        items:
+          $ref: '#/definitions/models.Driver'
+        type: array
+      favourite_teams:
+        items:
+          $ref: '#/definitions/models.Team'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      role:
+        $ref: '#/definitions/models.Role'
+    type: object
+info:
+  contact: {}
+  description: HTTP API for authentication and racing statistics.
+  title: RacingGuru API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      responses:
+        "200":
+          description: OK
+      summary: Health check
+      tags:
+      - system
+  /docs:
+    get:
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Swagger UI
+      tags:
+      - system
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.tokenS'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: User registration
+      tags:
+      - auth
+  /stats/driver:
+    get:
+      parameters:
+      - description: Driver UUID
+        format: uuid
+        in: query
+        name: driver_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.DriverStatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Driver statistics
+      tags:
+      - stats
+  /stats/team:
+    get:
+      parameters:
+      - description: Team UUID
+        format: uuid
+        in: query
+        name: team_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TeamStatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Team statistics
+      tags:
+      - stats
+  /swagger.yaml:
+    get:
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: OpenAPI specification
+      tags:
+      - system
+swagger: "2.0"
