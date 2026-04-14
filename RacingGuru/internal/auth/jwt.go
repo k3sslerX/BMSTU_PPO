@@ -4,7 +4,6 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"fmt"
-	"os"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -27,8 +26,8 @@ func GenerateToken(user models.User) (string, error) {
 }
 
 func ParseToken(tokenString string) (models.User, error) {
-	secretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
-	//secretKey := []byte("secretKey")
+	//secretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+	secretKey := []byte("secretKey")
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

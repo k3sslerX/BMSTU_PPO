@@ -14,7 +14,7 @@ type Server struct {
 	logger *log.Logger
 }
 
-func NewServer(addr string, handler http.HandlerFunc, logger *log.Logger) *Server {
+func NewServer(addr string, handler http.Handler, logger *log.Logger) *Server {
 	return &Server{server: &http.Server{Addr: addr, Handler: handler}, logger: logger}
 }
 

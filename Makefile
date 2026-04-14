@@ -11,3 +11,9 @@ iter-data:
 
 swag-gen:
 	cd RacingGuru && make swagger
+
+run:
+	cd RacingGuru/cmd && go run .
+
+build:
+	cd RacingGuru/cmd && go build -o ../../exec/server.exe .

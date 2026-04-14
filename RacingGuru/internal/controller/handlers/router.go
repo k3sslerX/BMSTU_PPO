@@ -33,7 +33,7 @@ func (h *Handler) Routes() http.Handler {
 	r.Get("/swagger.yaml", h.SwaggerSpec)
 	r.Get("/docs", h.SwaggerUI)
 
-	r.Post("/login", h.Login)
+	r.Get("/login", h.Login)
 	r.Post("/register", h.Register)
 
 	r.Route("/stats", func(r chi.Router) {
