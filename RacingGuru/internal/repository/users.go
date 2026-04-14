@@ -70,6 +70,27 @@ func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.Us
 	return user, nil
 }
 
+func (r *Repository) UserChangePassword(ctx context.Context, user models.User, pwd string) error {
+	query, args, err := statementBuilder().
+		Update("users").
+		Set("passwordHash", pwd).
+		Where(sq.Eq{"id": user.Id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	tag, err := r.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return shared.ErrorNotFound
+	}
+
+	return nil
+}
+
 func (r *Repository) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
 	query, args, err := statementBuilder().
 		Select("1").

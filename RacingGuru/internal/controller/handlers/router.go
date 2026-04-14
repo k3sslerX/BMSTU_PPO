@@ -43,7 +43,29 @@ func (h *Handler) Routes() http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware)
-
+		r.Post("/change-password", h.ChangePassword)
+		r.Route("/users", func(r chi.Router) {
+			r.Post("/favourite-driver", h.ToggleFavouriteDriver)
+			r.Post("/favourite-team", h.ToggleFavouriteTeam)
+		})
+		r.Route("/sudoku", func(r chi.Router) {
+			r.Get("/drivers", h.SudokuDrivers)
+			r.Get("/teams", h.SudokuTeams)
+		})
+		r.Route("/admin", func(r chi.Router) {
+			r.Post("/drivers", h.CreateDriver)
+			r.Patch("/drivers", h.UpdateDriver)
+			r.Post("/teams", h.CreateTeam)
+			r.Patch("/teams", h.UpdateTeam)
+			r.Post("/tracks", h.CreateTrack)
+			r.Patch("/tracks", h.UpdateTrack)
+			r.Post("/races", h.CreateRace)
+			r.Patch("/races", h.UpdateRace)
+			r.Post("/car-participants", h.CreateCarParticipant)
+			r.Patch("/car-participants", h.UpdateCarParticipant)
+			r.Patch("/car-participants/drivers", h.UpdateCarParticipantDrivers)
+			r.Post("/race-results", h.UpsertRaceResult)
+		})
 	})
 
 	return r

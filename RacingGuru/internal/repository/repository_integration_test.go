@@ -232,6 +232,19 @@ func TestRepositoryUsersLifecycleIntegration(t *testing.T) {
 		t.Fatalf("UserLogin() returned unexpected user: %+v", loggedInUser)
 	}
 
+	err = fixture.repo.UserChangePassword(ctx, loggedInUser, "new-secret")
+	if err != nil {
+		t.Fatalf("UserChangePassword() error = %v", err)
+	}
+
+	_, err = fixture.repo.UserLogin(ctx, models.User{
+		Email:    email,
+		Password: "new-secret",
+	})
+	if err != nil {
+		t.Fatalf("UserLogin() after password change error = %v", err)
+	}
+
 	err = fixture.repo.ToggleFavouriteDriver(ctx, loggedInUser, models.Driver{Id: driverID})
 	if err != nil {
 		t.Fatalf("ToggleFavouriteDriver(add) error = %v", err)

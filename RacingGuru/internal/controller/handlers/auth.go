@@ -15,6 +15,48 @@ type tokenS struct {
 	Token string `json:"token"`
 }
 
+// ChangePassword godoc
+// @Summary Change user password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param request body ChangePasswordRequest true "New password payload"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /change-password [post]
+func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	user, ok := getUserFromContext(r.Context())
+	if !ok {
+		h.sendError(w, "unauthorized", "UNAUTHORIZED", http.StatusUnauthorized)
+		return
+	}
+
+	request := ChangePasswordRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		h.sendError(w, "invalid request", "INVALID_REQUEST", http.StatusBadRequest)
+		return
+	}
+	if request.Password == "" {
+		h.sendError(w, "invalid request", "INVALID_REQUEST", http.StatusBadRequest)
+		return
+	}
+
+	uc := auth.NewUserChangePasswordUseCase(h.Repo, user)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := uc.Run(ctx, request.Password); err != nil {
+		h.sendErrorExpanded(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // Login godoc
 // @Summary User login
 // @Tags auth

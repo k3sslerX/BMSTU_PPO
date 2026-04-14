@@ -15,6 +15,7 @@ func NewUserLoginUseCase(repo Repo) *UserLoginUseCase {
 }
 
 func (uc UserLoginUseCase) Run(ctx context.Context, user models.User) (string, error) {
+	user.Password = hashPassword(user.Password)
 	authUser, err := uc.Repo.UserLogin(ctx, user)
 	if err != nil {
 		return "", err

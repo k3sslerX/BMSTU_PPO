@@ -14,6 +14,10 @@ type RegisterRequest struct {
 	Role     models.Role `json:"role" enums:"admin,user" example:"user"`
 }
 
+type ChangePasswordRequest struct {
+	Password string `json:"password" example:"newSecret123"`
+}
+
 type DriverStatsResponse struct {
 	Stats models.DriverStats `json:"driver_stats"`
 }
