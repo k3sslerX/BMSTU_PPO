@@ -3,6 +3,7 @@ package repository
 import (
 	"RacingGuru/internal/models"
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -341,14 +342,11 @@ func TestRepositoryStatsIntegration(t *testing.T) {
 func newIntegrationFixture(t *testing.T) *integrationFixture {
 	t.Helper()
 
-	databaseURL := "postgresql://postgres:1337@localhost:5432/races"
-	//databaseURL := os.Getenv("TEST_DATABASE_URL")
-	//if databaseURL == "" {
-	//	databaseURL = os.Getenv("DATABASE_URL")
-	//}
-	//if databaseURL == "" {
-	//	t.Skip("TEST_DATABASE_URL or DATABASE_URL is not set")
-	//}
+	//databaseURL := "postgresql://postgres:1337@localhost:5432/races"
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL or DATABASE_URL is not set")
+	}
 
 	ctx := context.Background()
 	pool, err := pgxpool.Connect(ctx, databaseURL)
