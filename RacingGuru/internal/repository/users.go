@@ -7,31 +7,52 @@ import (
 	"errors"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 )
 
 func (r *Repository) UserRegister(ctx context.Context, user models.User) (models.User, error) {
 	var id string
-	row := r.Pool.QueryRow(ctx,
-		"SELECT id FROM users WHERE email = $1", user.Email)
-	err := row.Scan(&id)
+	query, args, err := statementBuilder().
+		Select("id").
+		From("users").
+		Where(sq.Eq{"email": user.Email}).
+		ToSql()
+	if err != nil {
+		return models.User{}, err
+	}
+	row := r.Pool.QueryRow(ctx, query, args...)
+	err = row.Scan(&id)
 	if err == nil {
 		return models.User{}, shared.ErrorUserAlreadyExists
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		return models.User{}, err
 	}
-	_, err = r.Pool.Exec(ctx,
-		"INSERT INTO users (id, name, email, passwordHash, role, created_at) VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5)",
-		user.Name, user.Email, user.Password, user.Role, time.Now().UTC())
+	query, args, err = statementBuilder().
+		Insert("users").
+		Columns("id", "name", "email", "passwordHash", "role", "created_at").
+		Values(sq.Expr("uuid_generate_v4()"), user.Name, user.Email, user.Password, user.Role, time.Now().UTC()).
+		ToSql()
+	if err != nil {
+		return models.User{}, err
+	}
+	_, err = r.Pool.Exec(ctx, query, args...)
 	return user, err
 }
 
 func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.User, error) {
 	var id, name, password, role string
-	row := r.Pool.QueryRow(ctx,
-		"SELECT id, name, passwordHash, role FROM users WHERE email = $1", user.Email)
-	err := row.Scan(&id, &name, &password, &role)
+	query, args, err := statementBuilder().
+		Select("id", "name", "passwordHash", "role").
+		From("users").
+		Where(sq.Eq{"email": user.Email}).
+		ToSql()
+	if err != nil {
+		return user, err
+	}
+	row := r.Pool.QueryRow(ctx, query, args...)
+	err = row.Scan(&id, &name, &password, &role)
 	if err != nil {
 		return user, err
 	}
@@ -50,51 +71,79 @@ func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.Us
 }
 
 func (r *Repository) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
-	var exists bool
-	err := r.Pool.QueryRow(ctx,
-		"SELECT EXISTS(SELECT 1 FROM favourite_drivers WHERE user_id = $1 AND driver = $2)",
-		user.Id, driver.Id,
-	).Scan(&exists)
+	query, args, err := statementBuilder().
+		Select("1").
+		From("favourite_drivers").
+		Where(sq.Eq{"user_id": user.Id, "driver": driver.Id}).
+		ToSql()
 	if err != nil {
 		return err
 	}
 
-	if exists {
-		_, err = r.Pool.Exec(ctx,
-			"DELETE FROM favourite_drivers WHERE user_id = $1 AND driver = $2",
-			user.Id, driver.Id,
-		)
+	var exists int
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&exists)
+	if err == nil {
+		query, args, err = statementBuilder().
+			Delete("favourite_drivers").
+			Where(sq.Eq{"user_id": user.Id, "driver": driver.Id}).
+			ToSql()
+		if err != nil {
+			return err
+		}
+		_, err = r.Pool.Exec(ctx, query, args...)
+		return err
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	}
 
-	_, err = r.Pool.Exec(ctx,
-		"INSERT INTO favourite_drivers (user_id, driver) VALUES ($1, $2)",
-		user.Id, driver.Id,
-	)
+	query, args, err = statementBuilder().
+		Insert("favourite_drivers").
+		Columns("user_id", "driver").
+		Values(user.Id, driver.Id).
+		ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = r.Pool.Exec(ctx, query, args...)
 	return err
 }
 
 func (r *Repository) ToggleFavouriteTeam(ctx context.Context, user models.User, team models.Team) error {
-	var exists bool
-	err := r.Pool.QueryRow(ctx,
-		"SELECT EXISTS(SELECT 1 FROM favourite_teams WHERE user_id = $1 AND team = $2)",
-		user.Id, team.Id,
-	).Scan(&exists)
+	query, args, err := statementBuilder().
+		Select("1").
+		From("favourite_teams").
+		Where(sq.Eq{"user_id": user.Id, "team": team.Id}).
+		ToSql()
 	if err != nil {
 		return err
 	}
 
-	if exists {
-		_, err = r.Pool.Exec(ctx,
-			"DELETE FROM favourite_teams WHERE user_id = $1 AND team = $2",
-			user.Id, team.Id,
-		)
+	var exists int
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&exists)
+	if err == nil {
+		query, args, err = statementBuilder().
+			Delete("favourite_teams").
+			Where(sq.Eq{"user_id": user.Id, "team": team.Id}).
+			ToSql()
+		if err != nil {
+			return err
+		}
+		_, err = r.Pool.Exec(ctx, query, args...)
+		return err
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
 		return err
 	}
 
-	_, err = r.Pool.Exec(ctx,
-		"INSERT INTO favourite_teams (user_id, team) VALUES ($1, $2)",
-		user.Id, team.Id,
-	)
+	query, args, err = statementBuilder().
+		Insert("favourite_teams").
+		Columns("user_id", "team").
+		Values(user.Id, team.Id).
+		ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = r.Pool.Exec(ctx, query, args...)
 	return err
 }

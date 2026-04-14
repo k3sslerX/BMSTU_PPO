@@ -4,19 +4,26 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"context"
-	"strconv"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 )
 
 func (r *Repository) CreateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
-	row := r.Pool.QueryRow(ctx,
-		"INSERT INTO driver (id, name, nationality, birthday) VALUES (uuid_generate_v4(), $1, $2, $3) RETURNING id",
-		driver.Name, driver.Nationality, driver.Birthday)
+	query, args, err := statementBuilder().
+		Insert("driver").
+		Columns("id", "name", "nationality", "birthday").
+		Values(sq.Expr("uuid_generate_v4()"), driver.Name, driver.Nationality, driver.Birthday).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return driver, err
+	}
+	row := r.Pool.QueryRow(ctx, query, args...)
 	var id uuid.UUID
-	err := row.Scan(&id)
+	err = row.Scan(&id)
 	if err != nil {
 		return driver, err
 	}
@@ -25,11 +32,18 @@ func (r *Repository) CreateDriver(ctx context.Context, driver models.Driver) (mo
 }
 
 func (r *Repository) CreateTeam(ctx context.Context, team models.Team) (models.Team, error) {
-	row := r.Pool.QueryRow(ctx,
-		"INSERT INTO team (id, name, country) VALUES (uuid_generate_v4(), $1, $2) RETURNING id",
-		team.Name, team.Country)
+	query, args, err := statementBuilder().
+		Insert("team").
+		Columns("id", "name", "country").
+		Values(sq.Expr("uuid_generate_v4()"), team.Name, team.Country).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return team, err
+	}
+	row := r.Pool.QueryRow(ctx, query, args...)
 	var id uuid.UUID
-	err := row.Scan(&id)
+	err = row.Scan(&id)
 	if err != nil {
 		return team, err
 	}
@@ -38,11 +52,18 @@ func (r *Repository) CreateTeam(ctx context.Context, team models.Team) (models.T
 }
 
 func (r *Repository) CreateTrack(ctx context.Context, track models.Track) (models.Track, error) {
-	row := r.Pool.QueryRow(ctx,
-		"INSERT INTO track (id, name, country, lap_length, turns) VALUES (uuid_generate_v4(), $1, $2, $3, $4) RETURNING id",
-		track.Name, track.Country, track.Length, track.Turns)
+	query, args, err := statementBuilder().
+		Insert("track").
+		Columns("id", "name", "country", "lap_length", "turns").
+		Values(sq.Expr("uuid_generate_v4()"), track.Name, track.Country, track.Length, track.Turns).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return track, err
+	}
+	row := r.Pool.QueryRow(ctx, query, args...)
 	var id uuid.UUID
-	err := row.Scan(&id)
+	err = row.Scan(&id)
 	if err != nil {
 		return track, err
 	}
@@ -59,9 +80,16 @@ func (r *Repository) CreateCarParticipant(ctx context.Context, carParticipant mo
 		_ = tx.Rollback(ctx)
 	}()
 
-	row := tx.QueryRow(ctx,
-		"INSERT INTO car_p (id, car, team, number) VALUES (uuid_generate_v4(), $1, $2, $3) RETURNING id",
-		carParticipant.CarID, carParticipant.TeamID, carParticipant.Number)
+	query, args, err := statementBuilder().
+		Insert("car_p").
+		Columns("id", "car", "team", "number").
+		Values(sq.Expr("uuid_generate_v4()"), carParticipant.CarID, carParticipant.TeamID, carParticipant.Number).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return carParticipant, err
+	}
+	row := tx.QueryRow(ctx, query, args...)
 	var id uuid.UUID
 	err = row.Scan(&id)
 	if err != nil {
@@ -81,12 +109,18 @@ func (r *Repository) CreateCarParticipant(ctx context.Context, carParticipant mo
 }
 
 func (r *Repository) CreateRace(ctx context.Context, race models.Race) (models.Race, error) {
-	row := r.Pool.QueryRow(ctx,
-		"INSERT INTO race (id, championship, track, name, date, type, duration) "+
-			"VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6) RETURNING id",
-		race.ChampionshipId, race.Track.Id, race.Name, race.Date.Format(time.DateOnly), race.Type, race.Duration)
+	query, args, err := statementBuilder().
+		Insert("race").
+		Columns("id", "championship", "track", "name", "date", "type", "duration").
+		Values(sq.Expr("uuid_generate_v4()"), race.ChampionshipId, race.Track.Id, race.Name, race.Date.Format(time.DateOnly), race.Type, race.Duration).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return race, err
+	}
+	row := r.Pool.QueryRow(ctx, query, args...)
 	var id uuid.UUID
-	err := row.Scan(&id)
+	err = row.Scan(&id)
 	if err != nil {
 		return race, err
 	}
@@ -118,13 +152,29 @@ func (r *Repository) UpsertRaceResult(ctx context.Context, result models.RaceRes
 	}
 
 	if !finishExists && !qualifyingExists {
-		row := tx.QueryRow(ctx, "SELECT 1 FROM car_p WHERE id = $1", result.CarParticipantID)
+		query, args, err := statementBuilder().
+			Select("1").
+			From("car_p").
+			Where(sq.Eq{"id": result.CarParticipantID}).
+			ToSql()
+		if err != nil {
+			return result, err
+		}
+		row := tx.QueryRow(ctx, query, args...)
 		var exists int
 		if err := row.Scan(&exists); err != nil {
 			return result, shared.ErrorNotFound
 		}
 
-		row = tx.QueryRow(ctx, "SELECT 1 FROM race WHERE id = $1", result.RaceID)
+		query, args, err = statementBuilder().
+			Select("1").
+			From("race").
+			Where(sq.Eq{"id": result.RaceID}).
+			ToSql()
+		if err != nil {
+			return result, err
+		}
+		row = tx.QueryRow(ctx, query, args...)
 		if err := row.Scan(&exists); err != nil {
 			return result, shared.ErrorNotFound
 		}
@@ -141,37 +191,21 @@ func (r *Repository) UpdateDriver(ctx context.Context, driver models.Driver) (mo
 	if driver.Id == uuid.Nil || (driver.Name == "" && driver.Nationality == "" && driver.Birthday == "") {
 		return driver, shared.ErrorInvalidData
 	}
-	sqlString := "UPDATE driver SET "
-	fields := make([]any, 0)
-	sep := false
-	cnt := 1
+	builder := statementBuilder().Update("driver").Where(sq.Eq{"id": driver.Id})
 	if driver.Name != "" {
-		sqlString += "name = $" + strconv.Itoa(cnt)
-		fields = append(fields, driver.Name)
-		sep = true
-		cnt++
+		builder = builder.Set("name", driver.Name)
 	}
 	if driver.Nationality != "" {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "nationality = $" + strconv.Itoa(cnt)
-		fields = append(fields, driver.Nationality)
-		sep = true
-		cnt++
+		builder = builder.Set("nationality", driver.Nationality)
 	}
 	if driver.Birthday != "" {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "birthday = $" + strconv.Itoa(cnt)
-		fields = append(fields, driver.Birthday)
-		sep = true
-		cnt++
+		builder = builder.Set("birthday", driver.Birthday)
 	}
-	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, driver.Id)
-	res, err := r.Pool.Exec(ctx, sqlString, fields...)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return driver, err
+	}
+	res, err := r.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return driver, err
 	}
@@ -185,28 +219,18 @@ func (r *Repository) UpdateTeam(ctx context.Context, team models.Team) (models.T
 	if team.Id == uuid.Nil || (team.Name == "" && team.Country == "") {
 		return team, shared.ErrorInvalidData
 	}
-	sqlString := "UPDATE team SET "
-	fields := make([]any, 0)
-	sep := false
-	cnt := 1
+	builder := statementBuilder().Update("team").Where(sq.Eq{"id": team.Id})
 	if team.Name != "" {
-		sqlString += "name = $" + strconv.Itoa(cnt)
-		fields = append(fields, team.Name)
-		sep = true
-		cnt++
+		builder = builder.Set("name", team.Name)
 	}
 	if team.Country != "" {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "country = $" + strconv.Itoa(cnt)
-		fields = append(fields, team.Country)
-		sep = true
-		cnt++
+		builder = builder.Set("country", team.Country)
 	}
-	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, team.Id)
-	res, err := r.Pool.Exec(ctx, sqlString, fields...)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return team, err
+	}
+	res, err := r.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return team, err
 	}
@@ -221,49 +245,26 @@ func (r *Repository) UpdateTrack(ctx context.Context, track models.Track) (model
 		return track, shared.ErrorInvalidData
 	}
 
-	sqlString := "UPDATE track SET "
-	fields := make([]any, 0)
-	sep := false
-	cnt := 1
+	builder := statementBuilder().Update("track").Where(sq.Eq{"id": track.Id})
 
 	if track.Name != "" {
-		sqlString += "name = $" + strconv.Itoa(cnt)
-		fields = append(fields, track.Name)
-		sep = true
-		cnt++
+		builder = builder.Set("name", track.Name)
 	}
 	if track.Country != "" {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "country = $" + strconv.Itoa(cnt)
-		fields = append(fields, track.Country)
-		sep = true
-		cnt++
+		builder = builder.Set("country", track.Country)
 	}
 	if track.Length != 0 {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "lap_length = $" + strconv.Itoa(cnt)
-		fields = append(fields, track.Length)
-		sep = true
-		cnt++
+		builder = builder.Set("lap_length", track.Length)
 	}
 	if track.Turns != 0 {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "turns = $" + strconv.Itoa(cnt)
-		fields = append(fields, track.Turns)
-		sep = true
-		cnt++
+		builder = builder.Set("turns", track.Turns)
 	}
 
-	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, track.Id)
-
-	res, err := r.Pool.Exec(ctx, sqlString, fields...)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return track, err
+	}
+	res, err := r.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return track, err
 	}
@@ -279,40 +280,23 @@ func (r *Repository) UpdateCarParticipant(ctx context.Context, carParticipant mo
 		return carParticipant, shared.ErrorInvalidData
 	}
 
-	sqlString := "UPDATE car_p SET "
-	fields := make([]any, 0)
-	sep := false
-	cnt := 1
+	builder := statementBuilder().Update("car_p").Where(sq.Eq{"id": carParticipant.Id})
 
 	if carParticipant.CarID != uuid.Nil {
-		sqlString += "car = $" + strconv.Itoa(cnt)
-		fields = append(fields, carParticipant.CarID)
-		sep = true
-		cnt++
+		builder = builder.Set("car", carParticipant.CarID)
 	}
 	if carParticipant.TeamID != uuid.Nil {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "team = $" + strconv.Itoa(cnt)
-		fields = append(fields, carParticipant.TeamID)
-		sep = true
-		cnt++
+		builder = builder.Set("team", carParticipant.TeamID)
 	}
 	if carParticipant.Number != "" {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "number = $" + strconv.Itoa(cnt)
-		fields = append(fields, carParticipant.Number)
-		sep = true
-		cnt++
+		builder = builder.Set("number", carParticipant.Number)
 	}
 
-	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, carParticipant.Id)
-
-	res, err := r.Pool.Exec(ctx, sqlString, fields...)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return carParticipant, err
+	}
+	res, err := r.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return carParticipant, err
 	}
@@ -336,7 +320,15 @@ func (r *Repository) UpdateCarParticipantDrivers(ctx context.Context, carPartici
 		_ = tx.Rollback(ctx)
 	}()
 
-	row := tx.QueryRow(ctx, "SELECT 1 FROM car_p WHERE id = $1", carParticipant.Id)
+	query, args, err := statementBuilder().
+		Select("1").
+		From("car_p").
+		Where(sq.Eq{"id": carParticipant.Id}).
+		ToSql()
+	if err != nil {
+		return carParticipant, err
+	}
+	row := tx.QueryRow(ctx, query, args...)
 	var exists int
 	if err := row.Scan(&exists); err != nil {
 		return carParticipant, shared.ErrorNotFound
@@ -359,67 +351,32 @@ func (r *Repository) UpdateRace(ctx context.Context, race models.Race) (models.R
 		return race, shared.ErrorInvalidData
 	}
 
-	sqlString := "UPDATE race SET "
-	fields := make([]any, 0)
-	sep := false
-	cnt := 1
+	builder := statementBuilder().Update("race").Where(sq.Eq{"id": race.Id})
 
 	if race.Name != "" {
-		sqlString += "name = $" + strconv.Itoa(cnt)
-		fields = append(fields, race.Name)
-		sep = true
-		cnt++
+		builder = builder.Set("name", race.Name)
 	}
 	if !race.Date.IsZero() {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "date = $" + strconv.Itoa(cnt)
-		fields = append(fields, race.Date)
-		sep = true
-		cnt++
+		builder = builder.Set("date", race.Date)
 	}
 	if race.Type != 0 {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "type = $" + strconv.Itoa(cnt)
-		fields = append(fields, race.Type)
-		sep = true
-		cnt++
+		builder = builder.Set("type", race.Type)
 	}
 	if race.Duration != 0 {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "duration = $" + strconv.Itoa(cnt)
-		fields = append(fields, race.Duration)
-		sep = true
-		cnt++
+		builder = builder.Set("duration", race.Duration)
 	}
 	if race.Track.Id != uuid.Nil {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "track = $" + strconv.Itoa(cnt)
-		fields = append(fields, race.Track.Id)
-		sep = true
-		cnt++
+		builder = builder.Set("track", race.Track.Id)
 	}
 	if race.ChampionshipId != uuid.Nil {
-		if sep {
-			sqlString += ", "
-		}
-		sqlString += "championship = $" + strconv.Itoa(cnt)
-		fields = append(fields, race.ChampionshipId)
-		sep = true
-		cnt++
+		builder = builder.Set("championship", race.ChampionshipId)
 	}
 
-	sqlString += " WHERE id = $" + strconv.Itoa(cnt)
-	fields = append(fields, race.Id)
-
-	res, err := r.Pool.Exec(ctx, sqlString, fields...)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return race, err
+	}
+	res, err := r.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return race, err
 	}
@@ -438,9 +395,15 @@ func upsertRaceStanding(
 	carParticipantID uuid.UUID,
 	position int,
 ) (bool, error) {
-	res, err := tx.Exec(ctx,
-		"UPDATE "+table+" SET pos = $1 WHERE race = $2 AND car_p = $3",
-		position, raceID, carParticipantID)
+	query, args, err := statementBuilder().
+		Update(table).
+		Set("pos", position).
+		Where(sq.Eq{"race": raceID, "car_p": carParticipantID}).
+		ToSql()
+	if err != nil {
+		return false, err
+	}
+	res, err := tx.Exec(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -448,9 +411,15 @@ func upsertRaceStanding(
 		return true, nil
 	}
 
-	_, err = tx.Exec(ctx,
-		"INSERT INTO "+table+" (race, car_p, pos) VALUES ($1, $2, $3)",
-		raceID, carParticipantID, position)
+	query, args, err = statementBuilder().
+		Insert(table).
+		Columns("race", "car_p", "pos").
+		Values(raceID, carParticipantID, position).
+		ToSql()
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, query, args...)
 	if err != nil {
 		return false, err
 	}
@@ -464,7 +433,14 @@ func replaceCarParticipantDrivers(
 	carParticipantID uuid.UUID,
 	drivers []models.Driver,
 ) error {
-	if _, err := tx.Exec(ctx, "DELETE FROM team_p WHERE car_p = $1", carParticipantID); err != nil {
+	query, args, err := statementBuilder().
+		Delete("team_p").
+		Where(sq.Eq{"car_p": carParticipantID}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, query, args...); err != nil {
 		return err
 	}
 
@@ -472,9 +448,15 @@ func replaceCarParticipantDrivers(
 		if driver.Id == uuid.Nil {
 			return shared.ErrorInvalidData
 		}
-		if _, err := tx.Exec(ctx,
-			"INSERT INTO team_p (car_p, driver) VALUES ($1, $2)",
-			carParticipantID, driver.Id); err != nil {
+		query, args, err = statementBuilder().
+			Insert("team_p").
+			Columns("car_p", "driver").
+			Values(carParticipantID, driver.Id).
+			ToSql()
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
 			return err
 		}
 	}
