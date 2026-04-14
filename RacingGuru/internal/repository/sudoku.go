@@ -4,6 +4,8 @@ import (
 	"RacingGuru/internal/models"
 	"context"
 	"fmt"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 func (r *Repository) GetDriverMatrix(ctx context.Context, matrix models.MatrixDrivers) (models.MatrixDrivers, error) {
@@ -35,24 +37,29 @@ func (r *Repository) GetTeamMatrix(ctx context.Context, matrix models.MatrixTeam
 }
 
 func (r *Repository) getDriversByConditions(ctx context.Context, firstCondition models.SudokuCondition, secondCondition models.SudokuCondition) ([]models.Driver, error) {
-	firstConditionSQL, firstArg, err := buildStatsConditionSQL("stats", firstCondition, 1)
+	firstConditionSQL, firstArg, err := buildStatsConditionSQL("stats", firstCondition)
 	if err != nil {
 		return nil, err
 	}
-	secondConditionSQL, secondArg, err := buildStatsConditionSQL("stats", secondCondition, 2)
+	secondConditionSQL, secondArg, err := buildStatsConditionSQL("stats", secondCondition)
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`
-		SELECT DISTINCT d.id, d.name, d.birthday::text, d.nationality
-		FROM driver d
-		CROSS JOIN LATERAL CalculateDriverStats(d.id) stats
-		WHERE %s AND %s
-		ORDER BY d.name
-	`, firstConditionSQL, secondConditionSQL)
+	query, args, err := statementBuilder().
+		Select("d.id", "d.name", "d.birthday::text", "d.nationality").
+		Distinct().
+		From("driver d").
+		JoinClause("CROSS JOIN LATERAL CalculateDriverStats(d.id) stats").
+		Where(sq.Expr(firstConditionSQL, firstArg)).
+		Where(sq.Expr(secondConditionSQL, secondArg)).
+		OrderBy("d.name").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
 
-	rows, err := r.Pool.Query(ctx, query, firstArg, secondArg)
+	rows, err := r.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,24 +82,29 @@ func (r *Repository) getDriversByConditions(ctx context.Context, firstCondition 
 }
 
 func (r *Repository) getTeamsByConditions(ctx context.Context, firstCondition models.SudokuCondition, secondCondition models.SudokuCondition) ([]models.Team, error) {
-	firstConditionSQL, firstArg, err := buildStatsConditionSQL("stats", firstCondition, 1)
+	firstConditionSQL, firstArg, err := buildStatsConditionSQL("stats", firstCondition)
 	if err != nil {
 		return nil, err
 	}
-	secondConditionSQL, secondArg, err := buildStatsConditionSQL("stats", secondCondition, 2)
+	secondConditionSQL, secondArg, err := buildStatsConditionSQL("stats", secondCondition)
 	if err != nil {
 		return nil, err
 	}
 
-	query := fmt.Sprintf(`
-		SELECT DISTINCT t.id, t.name, t.country
-		FROM team t
-		CROSS JOIN LATERAL CalculateTeamStats(t.id) stats
-		WHERE %s AND %s
-		ORDER BY t.name
-	`, firstConditionSQL, secondConditionSQL)
+	query, args, err := statementBuilder().
+		Select("t.id", "t.name", "t.country").
+		Distinct().
+		From("team t").
+		JoinClause("CROSS JOIN LATERAL CalculateTeamStats(t.id) stats").
+		Where(sq.Expr(firstConditionSQL, firstArg)).
+		Where(sq.Expr(secondConditionSQL, secondArg)).
+		OrderBy("t.name").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
 
-	rows, err := r.Pool.Query(ctx, query, firstArg, secondArg)
+	rows, err := r.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +126,7 @@ func (r *Repository) getTeamsByConditions(ctx context.Context, firstCondition mo
 	return teams, nil
 }
 
-func buildStatsConditionSQL(statsAlias string, condition models.SudokuCondition, placeholderIdx int) (string, any, error) {
+func buildStatsConditionSQL(statsAlias string, condition models.SudokuCondition) (string, any, error) {
 	fieldName, err := mapStatsField(condition.Field)
 	if err != nil {
 		return "", nil, err
@@ -125,7 +137,7 @@ func buildStatsConditionSQL(statsAlias string, condition models.SudokuCondition,
 		return "", nil, err
 	}
 
-	return fmt.Sprintf("%s.%s %s $%d", statsAlias, fieldName, operator, placeholderIdx), condition.Value, nil
+	return fmt.Sprintf("%s.%s %s ?", statsAlias, fieldName, operator), condition.Value, nil
 }
 
 func mapStatsField(field string) (string, error) {
