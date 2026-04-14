@@ -19,4 +19,5 @@ type Repo interface {
 	UpdateTrack(context.Context, models.Track) (models.Track, error)
 	UpdateDriver(context.Context, models.Driver) (models.Driver, error)
 	UpdateCarParticipant(context.Context, models.CarParticipant) (models.CarParticipant, error)
+	UpdateUserRole(context.Context, models.User) (models.User, error)
 }

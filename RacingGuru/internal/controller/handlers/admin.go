@@ -5,6 +5,8 @@ import (
 	"RacingGuru/internal/models"
 	"encoding/json"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func (h *Handler) requireUser(w http.ResponseWriter, r *http.Request) (models.User, bool) {
@@ -96,6 +98,51 @@ func (h *Handler) UpdateDriver(w http.ResponseWriter, r *http.Request) {
 
 	uc := admin.NewUpdateDriverUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), driver)
+	if err != nil {
+		h.sendErrorExpanded(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, updated)
+}
+
+// UpdateUserRole godoc
+// @Summary Update user role
+// @Description Changes another user's role. Only users with role `admin` can call this endpoint.
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param request body UpdateUserRoleRequest true "User role update payload"
+// @Success 200 {object} models.User
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/users/role [patch]
+func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+
+	request, ok := decodeJSONBody[UpdateUserRoleRequest](w, r)
+	if !ok {
+		return
+	}
+
+	userID, err := uuid.Parse(request.Id)
+	if err != nil {
+		h.sendError(w, "invalid data", "INVALID_DATA", http.StatusBadRequest)
+		return
+	}
+
+	uc := admin.NewUpdateUserRoleUseCase(h.Repo, user)
+	updated, err := uc.Run(r.Context(), models.User{
+		Id:   userID,
+		Role: request.Role,
+	})
 	if err != nil {
 		h.sendErrorExpanded(w, err)
 		return

@@ -90,24 +90,33 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 // Register godoc
 // @Summary User registration
+// @Description Registers a new user with the default role `user`
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body RegisterRequest true "Registration payload"
-// @Success 201 {object} models.User
+// @Param request body RegisterRequest true "Registration payload without role"
+// @Success 201 {object} models.User "Registered user with role user"
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	user := models.User{}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	request := RegisterRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		h.sendError(w, "invalid request", "INVALID_REQUEST", http.StatusBadRequest)
 		return
 	}
-	if user.Email == "" || user.Password == "" || user.Role == "" {
+	if request.Email == "" || request.Password == "" {
 		h.sendError(w, "invalid request body", "INVALID_REQUEST", http.StatusBadRequest)
 		return
 	}
+
+	user := models.User{
+		Name:     request.Name,
+		Email:    request.Email,
+		Password: request.Password,
+		Role:     models.RoleUser,
+	}
+
 	uc := auth.NewUserRegisterUseCase(h.Repo)
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()

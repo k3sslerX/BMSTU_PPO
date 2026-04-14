@@ -99,3 +99,10 @@ func (repo *testRepo) UpdateDriver(ctx context.Context, driver models.Driver) (m
 	}
 	return models.Driver{}, shared.ErrorNotFound
 }
+
+func (repo *testRepo) UpdateUserRole(ctx context.Context, user models.User) (models.User, error) {
+	if user.Id == uuid.MustParse("77777777-7777-7777-7777-777777777777") {
+		return user, nil
+	}
+	return models.User{}, shared.ErrorNotFound
+}

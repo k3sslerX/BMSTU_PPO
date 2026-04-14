@@ -41,6 +41,29 @@ func (r *Repository) UserRegister(ctx context.Context, user models.User) (models
 	return user, err
 }
 
+func (r *Repository) HasAdmin(ctx context.Context) (bool, error) {
+	query, args, err := statementBuilder().
+		Select("1").
+		From("users").
+		Where(sq.Eq{"role": models.RoleAdmin}).
+		Limit(1).
+		ToSql()
+	if err != nil {
+		return false, err
+	}
+
+	var exists int
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&exists)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, err
+}
+
 func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.User, error) {
 	var id, name, password, role string
 	query, args, err := statementBuilder().
@@ -89,6 +112,52 @@ func (r *Repository) UserChangePassword(ctx context.Context, user models.User, p
 	}
 
 	return nil
+}
+
+func (r *Repository) UpdateUserRole(ctx context.Context, user models.User) (models.User, error) {
+	if user.Id == uuid.Nil || (user.Role != models.RoleAdmin && user.Role != models.RoleUser) {
+		return models.User{}, shared.ErrorInvalidData
+	}
+
+	var email string
+	query, args, err := statementBuilder().
+		Select("email").
+		From("users").
+		Where(sq.Eq{"id": user.Id}).
+		ToSql()
+	if err != nil {
+		return models.User{}, err
+	}
+
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.User{}, shared.ErrorNotFound
+	}
+	if err != nil {
+		return models.User{}, err
+	}
+	if email == "admin" {
+		return models.User{}, shared.ErrorPermissionDenied
+	}
+
+	query, args, err = statementBuilder().
+		Update("users").
+		Set("role", user.Role).
+		Where(sq.Eq{"id": user.Id}).
+		ToSql()
+	if err != nil {
+		return models.User{}, err
+	}
+
+	tag, err := r.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return models.User{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return models.User{}, shared.ErrorNotFound
+	}
+
+	return user, nil
 }
 
 func (r *Repository) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {

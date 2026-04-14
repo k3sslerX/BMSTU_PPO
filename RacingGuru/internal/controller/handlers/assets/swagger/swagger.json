@@ -821,6 +821,77 @@
                 }
             }
         },
+        "/admin/users/role": {
+            "patch": {
+                "description": "Changes another user's role. Only users with role `admin` can call this endpoint.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Update user role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "User role update payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateUserRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/change-password": {
             "post": {
                 "consumes": [
@@ -948,6 +1019,7 @@
         },
         "/register": {
             "post": {
+                "description": "Registers a new user with the default role `user`",
                 "consumes": [
                     "application/json"
                 ],
@@ -960,7 +1032,7 @@
                 "summary": "User registration",
                 "parameters": [
                     {
-                        "description": "Registration payload",
+                        "description": "Registration payload without role",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -971,7 +1043,7 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Registered user with role user",
                         "schema": {
                             "$ref": "#/definitions/models.User"
                         }
@@ -1380,6 +1452,23 @@
                 "password": {
                     "type": "string",
                     "example": "secret123"
+                }
+            }
+        },
+        "handlers.TeamStatsResponse": {
+            "type": "object",
+            "properties": {
+                "team_stats": {
+                    "$ref": "#/definitions/models.TeamStats"
+                }
+            }
+        },
+        "handlers.UpdateUserRoleRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "77777777-7777-7777-7777-777777777777"
                 },
                 "role": {
                     "enum": [
@@ -1391,15 +1480,7 @@
                             "$ref": "#/definitions/models.Role"
                         }
                     ],
-                    "example": "user"
-                }
-            }
-        },
-        "handlers.TeamStatsResponse": {
-            "type": "object",
-            "properties": {
-                "team_stats": {
-                    "$ref": "#/definitions/models.TeamStats"
+                    "example": "admin"
                 }
             }
         },

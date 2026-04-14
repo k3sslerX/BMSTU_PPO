@@ -55,6 +55,7 @@ func (h *Handler) Routes() http.Handler {
 		r.Route("/admin", func(r chi.Router) {
 			r.Post("/drivers", h.CreateDriver)
 			r.Patch("/drivers", h.UpdateDriver)
+			r.Patch("/users/role", h.UpdateUserRole)
 			r.Post("/teams", h.CreateTeam)
 			r.Patch("/teams", h.UpdateTeam)
 			r.Post("/tracks", h.CreateTrack)

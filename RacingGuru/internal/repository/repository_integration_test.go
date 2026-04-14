@@ -2,7 +2,9 @@ package repository
 
 import (
 	"RacingGuru/internal/models"
+	"RacingGuru/internal/shared"
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -238,6 +240,26 @@ func TestRepositoryUsersLifecycleIntegration(t *testing.T) {
 		t.Fatalf("UserChangePassword() error = %v", err)
 	}
 
+	updatedUser, err := fixture.repo.UpdateUserRole(ctx, models.User{
+		Id:   loggedInUser.Id,
+		Role: models.RoleAdmin,
+	})
+	if err != nil {
+		t.Fatalf("UpdateUserRole() error = %v", err)
+	}
+	if updatedUser.Role != models.RoleAdmin {
+		t.Fatalf("UpdateUserRole() role = %q, want %q", updatedUser.Role, models.RoleAdmin)
+	}
+
+	var storedRole string
+	err = fixture.pool.QueryRow(ctx, "SELECT role FROM users WHERE id = $1", loggedInUser.Id).Scan(&storedRole)
+	if err != nil {
+		t.Fatalf("select updated user role: %v", err)
+	}
+	if storedRole != string(models.RoleAdmin) {
+		t.Fatalf("stored role = %q, want %q", storedRole, models.RoleAdmin)
+	}
+
 	_, err = fixture.repo.UserLogin(ctx, models.User{
 		Email:    email,
 		Password: "new-secret",
@@ -269,6 +291,36 @@ func TestRepositoryUsersLifecycleIntegration(t *testing.T) {
 		t.Fatalf("ToggleFavouriteTeam(remove) error = %v", err)
 	}
 	assertFavouriteCount(t, fixture.pool, "favourite_teams", "team", fixture.userID, teamID, 0)
+}
+
+func TestRepositoryUpdateUserRoleDeniedForAdminLogin(t *testing.T) {
+	ctx := context.Background()
+	fixture := newIntegrationFixture(t)
+
+	adminUser := models.User{
+		Name:     integrationName("admin-user"),
+		Email:    "admin",
+		Password: "secret",
+		Role:     models.RoleAdmin,
+	}
+
+	_, err := fixture.repo.UserRegister(ctx, adminUser)
+	if err != nil {
+		t.Fatalf("UserRegister(admin) error = %v", err)
+	}
+
+	err = fixture.pool.QueryRow(ctx, "SELECT id FROM users WHERE email = $1", adminUser.Email).Scan(&fixture.userID)
+	if err != nil {
+		t.Fatalf("select admin user id: %v", err)
+	}
+
+	_, err = fixture.repo.UpdateUserRole(ctx, models.User{
+		Id:   fixture.userID,
+		Role: models.RoleUser,
+	})
+	if !errors.Is(err, shared.ErrorPermissionDenied) {
+		t.Fatalf("UpdateUserRole(admin login) error = %v, want %v", err, shared.ErrorPermissionDenied)
+	}
 }
 
 func TestRepositoryStatsIntegration(t *testing.T) {
