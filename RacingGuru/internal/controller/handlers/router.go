@@ -42,7 +42,7 @@ func (h *Handler) Routes() http.Handler {
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
+		r.Use(h.authMiddleware)
 		r.Post("/change-password", h.ChangePassword)
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/favourite-driver", h.ToggleFavouriteDriver)

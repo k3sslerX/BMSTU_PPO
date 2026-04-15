@@ -29,13 +29,11 @@ func main() {
 	pool, err := pgxpool.Connect(context.Background(), dbURL)
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 	defer pool.Close()
 	repo := repository.NewRepository(pool)
-	if err := bootstrap.EnsureAdmin(context.Background(), repo); err != nil {
+	if err = bootstrap.EnsureAdmin(context.Background(), repo); err != nil {
 		log.Fatal(err)
-		return
 	}
 	handler := handlers.NewHandler(repo)
 	logger := log.New(logFile, "", log.LstdFlags)

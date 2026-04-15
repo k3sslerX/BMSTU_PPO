@@ -37,7 +37,7 @@ func ParseToken(tokenString string) (models.User, error) {
 	})
 
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, shared.ErrorInvalidToken
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
