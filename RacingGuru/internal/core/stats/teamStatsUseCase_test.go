@@ -10,6 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
+var testTeamID = uuid.MustParse("22222222-2222-2222-2222-222222222222")
+var unknownTeamID = uuid.MustParse("aaaaaaaa-9999-9999-9999-999999999999")
+
 func TestTeamStatsUseCase(t *testing.T) {
 	repo := &testRepo{}
 	user := models.User{Role: models.RoleUser}
@@ -34,7 +37,7 @@ func TestTeamStatsUseCase(t *testing.T) {
 	}
 
 	testUc4 := NewTeamStatsUseCase(repo, user)
-	_, err = testUc4.Run(context.Background(), models.Team{Id: uuid.MustParse("44444444-4444-4444-4444-444444444444")})
+	_, err = testUc4.Run(context.Background(), models.Team{Id: unknownTeamID})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

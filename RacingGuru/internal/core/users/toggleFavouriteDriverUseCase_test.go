@@ -10,29 +10,30 @@ import (
 	"github.com/google/uuid"
 )
 
+var testFavouriteUserID = uuid.MustParse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+var testFavouriteDriverID = uuid.MustParse("11111111-1111-1111-1111-111111111111")
+
 func TestToggleFavouriteDriverUseCase(t *testing.T) {
 	var err error
-	userID := uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-	driverID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
-	user := models.User{Id: userID, Role: models.RoleUser}
+	user := models.User{Id: testFavouriteUserID, Role: models.RoleUser}
 
 	repo1 := &testRepo{}
 	testUc1 := NewToggleFavouriteDriverUseCase(repo1, user)
-	err = testUc1.Run(context.Background(), models.Driver{Id: driverID})
+	err = testUc1.Run(context.Background(), models.Driver{Id: testFavouriteDriverID})
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo1.hasFavouriteDriver(userID, driverID) {
+	if !repo1.hasFavouriteDriver(testFavouriteUserID, testFavouriteDriverID) {
 		t.Error("expected favourite_driver row to be inserted")
 	}
 
-	repo2 := &testRepo{favouriteDrivers: []favouriteDriverRow{{userID: userID, driverID: driverID}}}
+	repo2 := &testRepo{favouriteDrivers: []favouriteDriverRow{{userID: testFavouriteUserID, driverID: testFavouriteDriverID}}}
 	testUc2 := NewToggleFavouriteDriverUseCase(repo2, user)
-	err = testUc2.Run(context.Background(), models.Driver{Id: driverID})
+	err = testUc2.Run(context.Background(), models.Driver{Id: testFavouriteDriverID})
 	if err != nil {
 		t.Error(err)
 	}
-	if repo2.hasFavouriteDriver(userID, driverID) {
+	if repo2.hasFavouriteDriver(testFavouriteUserID, testFavouriteDriverID) {
 		t.Error("expected favourite_driver row to be deleted")
 	}
 
@@ -42,7 +43,7 @@ func TestToggleFavouriteDriverUseCase(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !repo3.hasFavouriteDriver(userID, driverID) {
+	if !repo3.hasFavouriteDriver(testFavouriteUserID, testFavouriteDriverID) {
 		t.Error("expected resolved driver row to be inserted")
 	}
 

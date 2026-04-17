@@ -35,19 +35,16 @@ func generateConditionsTeams() (models.MatrixTeams, error) {
 		{Label: "Больше 10 побед", Field: "total_wins", Op: models.ConditionOperatorGT, Value: 10},
 		{Label: "Меньше 10 побед", Field: "total_wins", Op: models.ConditionOperatorLT, Value: 10},
 		{Label: "Хотя бы 1 победа", Field: "total_wins", Op: models.ConditionOperatorGTE, Value: 1},
-		{Label: "Без побед", Field: "total_wins", Op: models.ConditionOperatorEQ, Value: 0},
 		{Label: "Больше 10 подиумов", Field: "total_podiums", Op: models.ConditionOperatorGT, Value: 10},
 		{Label: "Меньше 20 подиумов", Field: "total_podiums", Op: models.ConditionOperatorLT, Value: 20},
 		{Label: "Хотя бы 1 подиум", Field: "total_podiums", Op: models.ConditionOperatorGTE, Value: 1},
-		{Label: "Без подиумов", Field: "total_podiums", Op: models.ConditionOperatorEQ, Value: 0},
 		{Label: "Больше 1000 очков", Field: "total_points", Op: models.ConditionOperatorGT, Value: 1000},
-		{Label: "Меньше 250 очков", Field: "total_points", Op: models.ConditionOperatorLT, Value: 250},
+		{Label: "Меньше 2000 очков", Field: "total_points", Op: models.ConditionOperatorLT, Value: 2000},
 		{Label: "Набирала очки", Field: "total_points", Op: models.ConditionOperatorGTE, Value: 1},
 		{Label: "Без очков", Field: "total_points", Op: models.ConditionOperatorEQ, Value: 0},
 		{Label: "Больше 10 поулов", Field: "total_poles", Op: models.ConditionOperatorGT, Value: 10},
 		{Label: "Меньше 10 поулов", Field: "total_poles", Op: models.ConditionOperatorLT, Value: 10},
 		{Label: "Хотя бы 1 поул", Field: "total_poles", Op: models.ConditionOperatorGTE, Value: 1},
-		{Label: "Без поулов", Field: "total_poles", Op: models.ConditionOperatorEQ, Value: 0},
 		{Label: "Лучший финиш: победа", Field: "best_finish", Op: models.ConditionOperatorEQ, Value: 1},
 		{Label: "Лучший финиш в топ-3", Field: "best_finish", Op: models.ConditionOperatorLTE, Value: 3},
 		{Label: "Лучший финиш в топ-10", Field: "best_finish", Op: models.ConditionOperatorLTE, Value: 10},
@@ -57,6 +54,7 @@ func generateConditionsTeams() (models.MatrixTeams, error) {
 		{Label: "Лучшая квалификация в топ-10", Field: "best_qualifying", Op: models.ConditionOperatorLTE, Value: 10},
 		{Label: "Лучшая квалификация вне топ-3", Field: "best_qualifying", Op: models.ConditionOperatorGT, Value: 3},
 		{Label: "Лучший результат в чемпионате в топ-5", Field: "best_championship_position", Op: models.ConditionOperatorLTE, Value: 5},
+		{Label: "Лучший результат в чемпионате вне топ-3", Field: "best_championship_position", Op: models.ConditionOperatorGT, Value: 3},
 	}
 
 	if err := fillMatrixConditions(conditions, &matrix.ConditionSpecs); err != nil {

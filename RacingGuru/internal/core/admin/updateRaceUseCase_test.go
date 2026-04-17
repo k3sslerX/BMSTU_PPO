@@ -6,8 +6,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 func TestUpdateRaceUseCase(t *testing.T) {
@@ -27,7 +25,7 @@ func TestUpdateRaceUseCase(t *testing.T) {
 	}
 
 	testUc3 := NewUpdateRaceUseCase(repo, models.User{Role: models.RoleAdmin})
-	_, err = testUc3.Run(context.Background(), models.Race{Id: uuid.MustParse("66666666-6666-6666-6666-666666666666")})
+	_, err = testUc3.Run(context.Background(), models.Race{Id: unknownRaceID})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

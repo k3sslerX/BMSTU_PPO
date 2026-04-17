@@ -10,6 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
+var testRaceID = uuid.MustParse("33333333-3333-3333-3333-333333333333")
+var unknownRaceID = uuid.MustParse("cccccccc-cccc-cccc-cccc-cccccccccccc")
+
 func TestCreateRaceUseCase(t *testing.T) {
 	repo := &testRepo{}
 	var err error
@@ -27,7 +30,7 @@ func TestCreateRaceUseCase(t *testing.T) {
 	}
 
 	testUc3 := NewCreateRaceUseCase(repo, models.User{Role: models.RoleAdmin})
-	_, err = testUc3.Run(context.Background(), models.Race{Id: uuid.MustParse("66666666-6666-6666-6666-666666666666")})
+	_, err = testUc3.Run(context.Background(), models.Race{Id: unknownRaceID})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

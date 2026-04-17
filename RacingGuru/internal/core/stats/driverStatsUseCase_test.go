@@ -10,6 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
+var testDriverID = uuid.MustParse("11111111-1111-1111-1111-111111111111")
+var unknownDriverID = uuid.MustParse("99999999-9999-9999-9999-999999999999")
+
 func TestDriverStatsUseCase(t *testing.T) {
 	repo := &testRepo{}
 	user := models.User{Role: models.RoleUser}
@@ -34,7 +37,7 @@ func TestDriverStatsUseCase(t *testing.T) {
 	}
 
 	testUc4 := NewDriverStatsUseCase(repo, user)
-	_, err = testUc4.Run(context.Background(), models.Driver{Id: uuid.MustParse("33333333-3333-3333-3333-333333333333")})
+	_, err = testUc4.Run(context.Background(), models.Driver{Id: unknownDriverID})
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}

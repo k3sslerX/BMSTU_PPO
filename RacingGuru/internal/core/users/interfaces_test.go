@@ -45,7 +45,7 @@ func (repo *testRepo) ToggleFavouriteTeam(ctx context.Context, user models.User,
 	return nil
 }
 
-func (repo *testRepo) hasFavouriteDriver(userID, driverID uuid.UUID) bool {
+func (repo *testRepo) hasFavouriteDriver(userID uuid.UUID, driverID uuid.UUID) bool {
 	for _, row := range repo.favouriteDrivers {
 		if row.userID == userID && row.driverID == driverID {
 			return true
@@ -54,7 +54,7 @@ func (repo *testRepo) hasFavouriteDriver(userID, driverID uuid.UUID) bool {
 	return false
 }
 
-func (repo *testRepo) hasFavouriteTeam(userID, teamID uuid.UUID) bool {
+func (repo *testRepo) hasFavouriteTeam(userID uuid.UUID, teamID uuid.UUID) bool {
 	for _, row := range repo.favouriteTeams {
 		if row.userID == userID && row.teamID == teamID {
 			return true
