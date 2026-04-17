@@ -6,6 +6,28 @@ definitions:
         example: newSecret123
         type: string
     type: object
+  handlers.AuthUserResponse:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: Max Verstappen
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.Role'
+        enum:
+        - admin
+        - user
+        example: user
+    type: object
+  handlers.GenerateAdminSecretResponse:
+    properties:
+      secret:
+        example: WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf
+        type: string
+    type: object
   handlers.DriverStatsResponse:
     properties:
       driver_stats:
@@ -40,6 +62,9 @@ definitions:
         type: string
       password:
         example: secret123
+        type: string
+      secret:
+        example: WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf
         type: string
     type: object
   handlers.TeamStatsResponse:
@@ -938,9 +963,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Registers a new user with the default role `user`
+      description: Registers a new user. If a valid one-time `secret` is provided, registers the first admin instead.
       parameters:
-      - description: Registration payload without role
+      - description: Registration payload. Optional secret promotes the first user to admin
         in: body
         name: request
         required: true
@@ -950,11 +975,19 @@ paths:
       - application/json
       responses:
         "201":
-          description: Registered user with role user
+          description: Registered user
           schema:
-            $ref: '#/definitions/models.User'
+            $ref: '#/definitions/handlers.AuthUserResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
@@ -962,6 +995,29 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: User registration
+      tags:
+      - auth
+  /setup/admin-secret:
+    post:
+      consumes:
+      - application/json
+      description: Generates a one-time secret that can be passed in `/register` to create the first admin user.
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.GenerateAdminSecretResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Generate one-time admin secret
       tags:
       - auth
   /stats/driver:

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"RacingGuru/internal/core/auth"
 	"encoding/json"
 	"net/http"
 
@@ -9,7 +10,8 @@ import (
 )
 
 type Handler struct {
-	Repo Repo
+	Repo         Repo
+	AdminSecrets *auth.AdminSecretManager
 }
 
 type ErrorResponse struct {
@@ -20,7 +22,7 @@ type ErrorResponse struct {
 }
 
 func NewHandler(repo Repo) *Handler {
-	return &Handler{Repo: repo}
+	return &Handler{Repo: repo, AdminSecrets: auth.NewAdminSecretManager()}
 }
 
 func (h *Handler) Routes() http.Handler {
@@ -35,6 +37,7 @@ func (h *Handler) Routes() http.Handler {
 
 	r.Post("/login", h.Login)
 	r.Post("/register", h.Register)
+	r.Post("/setup/admin-secret", h.GenerateAdminSecret)
 
 	r.Route("/stats", func(r chi.Router) {
 		r.Get("/driver", h.StatsDriver)

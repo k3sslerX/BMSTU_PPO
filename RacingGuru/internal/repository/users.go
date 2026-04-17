@@ -119,28 +119,7 @@ func (r *Repository) UpdateUserRole(ctx context.Context, user models.User) (mode
 		return models.User{}, shared.ErrorInvalidData
 	}
 
-	var email string
 	query, args, err := statementBuilder().
-		Select("email").
-		From("users").
-		Where(sq.Eq{"id": user.Id}).
-		ToSql()
-	if err != nil {
-		return models.User{}, err
-	}
-
-	err = r.Pool.QueryRow(ctx, query, args...).Scan(&email)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return models.User{}, shared.ErrorNotFound
-	}
-	if err != nil {
-		return models.User{}, err
-	}
-	if email == "admin" {
-		return models.User{}, shared.ErrorPermissionDenied
-	}
-
-	query, args, err = statementBuilder().
 		Update("users").
 		Set("role", user.Role).
 		Where(sq.Eq{"id": user.Id}).

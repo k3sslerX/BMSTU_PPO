@@ -11,6 +11,17 @@ type RegisterRequest struct {
 	Name     string `json:"name" example:"Max Verstappen"`
 	Email    string `json:"email" example:"user@example.com"`
 	Password string `json:"password" example:"secret123"`
+	Secret   string `json:"secret,omitempty" example:"WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf"`
+}
+
+type AuthUserResponse struct {
+	Name  string      `json:"name" example:"Max Verstappen"`
+	Email string      `json:"email" example:"user@example.com"`
+	Role  models.Role `json:"role" enums:"admin,user" example:"user"`
+}
+
+type GenerateAdminSecretResponse struct {
+	Secret string `json:"secret" example:"WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf"`
 }
 
 type UpdateUserRoleRequest struct {

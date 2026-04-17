@@ -13,6 +13,14 @@ type tokenS struct {
 	Token string `json:"token"`
 }
 
+func newAuthUserResponse(user models.User) AuthUserResponse {
+	return AuthUserResponse{
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
+	}
+}
+
 // ChangePassword godoc
 // @Summary Change user password
 // @Tags auth
@@ -90,13 +98,15 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 // Register godoc
 // @Summary User registration
-// @Description Registers a new user with the default role `user`
+// @Description Registers a new user. If a valid one-time `secret` is provided, registers the first admin instead.
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body RegisterRequest true "Registration payload without role"
-// @Success 201 {object} models.User "Registered user with role user"
+// @Param request body RegisterRequest true "Registration payload. Optional secret promotes the first user to admin"
+// @Success 201 {object} AuthUserResponse "Registered user"
 // @Failure 400 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -120,12 +130,48 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	uc := auth.NewUserRegisterUseCase(h.Repo)
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
+	if request.Secret != "" {
+		if err := h.AdminSecrets.Validate(ctx, h.Repo, request.Secret); err != nil {
+			h.sendErrorExpanded(w, err)
+			return
+		}
+		user.Role = models.RoleAdmin
+	}
 	user, err := uc.Run(ctx, user)
 	if err != nil {
 		h.sendErrorExpanded(w, err)
+		return
+	}
+	if request.Secret != "" && user.Role == models.RoleAdmin {
+		h.AdminSecrets.Consume(request.Secret)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(user)
+	_ = json.NewEncoder(w).Encode(newAuthUserResponse(user))
+}
+
+// GenerateAdminSecret godoc
+// @Summary Generate one-time admin secret
+// @Description Generates a one-time secret that can be passed in `/register` to create the first admin user.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 201 {object} GenerateAdminSecretResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /setup/admin-secret [post]
+func (h *Handler) GenerateAdminSecret(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	secret, err := h.AdminSecrets.Generate(ctx, h.Repo)
+	if err != nil {
+		h.sendErrorExpanded(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(GenerateAdminSecretResponse{Secret: secret})
 }

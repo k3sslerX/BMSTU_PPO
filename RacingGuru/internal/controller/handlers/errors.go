@@ -19,6 +19,18 @@ func (h *Handler) sendErrorExpanded(w http.ResponseWriter, err error) {
 		h.sendError(w, "user already exists", "USER_ALREADY_EXISTS", http.StatusConflict)
 		return
 	}
+	if errors.Is(err, shared.ErrorAdminAlreadyExists) {
+		h.sendError(w, "admin already exists", "ADMIN_ALREADY_EXISTS", http.StatusConflict)
+		return
+	}
+	if errors.Is(err, shared.ErrorAdminSecretAlreadyIssued) {
+		h.sendError(w, "admin secret already issued", "ADMIN_SECRET_ALREADY_ISSUED", http.StatusConflict)
+		return
+	}
+	if errors.Is(err, shared.ErrorInvalidAdminSecret) {
+		h.sendError(w, "invalid admin secret", "INVALID_ADMIN_SECRET", http.StatusForbidden)
+		return
+	}
 	if errors.Is(err, shared.ErrorInvalidToken) {
 		h.sendError(w, "invalid token", "INVALID_TOKEN", http.StatusForbidden)
 		return

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"RacingGuru/internal/bootstrap"
 	"RacingGuru/internal/controller/handlers"
 	"RacingGuru/internal/controller/server"
 	"RacingGuru/internal/repository"
@@ -32,9 +31,6 @@ func main() {
 	}
 	defer pool.Close()
 	repo := repository.NewRepository(pool)
-	if err = bootstrap.EnsureAdmin(context.Background(), repo); err != nil {
-		log.Fatal(err)
-	}
 	handler := handlers.NewHandler(repo)
 	logger := log.New(logFile, "", log.LstdFlags)
 	s := server.NewServer(serverAddr, handler.Routes(), logger)
