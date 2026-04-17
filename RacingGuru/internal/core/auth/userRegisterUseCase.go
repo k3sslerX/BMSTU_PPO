@@ -14,5 +14,6 @@ func NewUserRegisterUseCase(repo Repo) *UserRegisterUseCase {
 }
 
 func (uc UserRegisterUseCase) Run(ctx context.Context, user models.User) (models.User, error) {
+	user.Password = hashPassword(user.Password)
 	return uc.Repo.UserRegister(ctx, user)
 }

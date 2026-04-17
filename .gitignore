@@ -2,3 +2,5 @@
 .idea*
 *.bkp
 *.cov
+.gocache
+exec*

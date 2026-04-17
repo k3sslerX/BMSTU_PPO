@@ -3,6 +3,7 @@ package repository
 import (
 	"RacingGuru/internal/models"
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -232,6 +233,39 @@ func TestRepositoryUsersLifecycleIntegration(t *testing.T) {
 		t.Fatalf("UserLogin() returned unexpected user: %+v", loggedInUser)
 	}
 
+	err = fixture.repo.UserChangePassword(ctx, loggedInUser, "new-secret")
+	if err != nil {
+		t.Fatalf("UserChangePassword() error = %v", err)
+	}
+
+	updatedUser, err := fixture.repo.UpdateUserRole(ctx, models.User{
+		Id:   loggedInUser.Id,
+		Role: models.RoleAdmin,
+	})
+	if err != nil {
+		t.Fatalf("UpdateUserRole() error = %v", err)
+	}
+	if updatedUser.Role != models.RoleAdmin {
+		t.Fatalf("UpdateUserRole() role = %q, want %q", updatedUser.Role, models.RoleAdmin)
+	}
+
+	var storedRole string
+	err = fixture.pool.QueryRow(ctx, "SELECT role FROM users WHERE id = $1", loggedInUser.Id).Scan(&storedRole)
+	if err != nil {
+		t.Fatalf("select updated user role: %v", err)
+	}
+	if storedRole != string(models.RoleAdmin) {
+		t.Fatalf("stored role = %q, want %q", storedRole, models.RoleAdmin)
+	}
+
+	_, err = fixture.repo.UserLogin(ctx, models.User{
+		Email:    email,
+		Password: "new-secret",
+	})
+	if err != nil {
+		t.Fatalf("UserLogin() after password change error = %v", err)
+	}
+
 	err = fixture.repo.ToggleFavouriteDriver(ctx, loggedInUser, models.Driver{Id: driverID})
 	if err != nil {
 		t.Fatalf("ToggleFavouriteDriver(add) error = %v", err)
@@ -328,14 +362,11 @@ func TestRepositoryStatsIntegration(t *testing.T) {
 func newIntegrationFixture(t *testing.T) *integrationFixture {
 	t.Helper()
 
-	databaseURL := "postgresql://postgres:1337@localhost:5432/races"
-	//databaseURL := os.Getenv("TEST_DATABASE_URL")
-	//if databaseURL == "" {
-	//	databaseURL = os.Getenv("DATABASE_URL")
-	//}
-	//if databaseURL == "" {
-	//	t.Skip("TEST_DATABASE_URL or DATABASE_URL is not set")
-	//}
+	//databaseURL := "postgresql://postgres:1337@localhost:5432/races"
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL or DATABASE_URL is not set")
+	}
 
 	ctx := context.Background()
 	pool, err := pgxpool.Connect(ctx, databaseURL)
