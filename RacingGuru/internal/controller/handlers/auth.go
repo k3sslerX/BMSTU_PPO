@@ -89,6 +89,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := uc.Run(ctx, user)
 	if err != nil {
 		h.sendErrorExpanded(w, err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
