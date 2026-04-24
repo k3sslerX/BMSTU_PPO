@@ -4,6 +4,7 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"context"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -163,6 +164,9 @@ func (r *Repository) UpsertRaceResult(ctx context.Context, result models.RaceRes
 		row := tx.QueryRow(ctx, query, args...)
 		var exists int
 		if err := row.Scan(&exists); err != nil {
+			if !errors.Is(err, pgx.ErrNoRows) {
+				return result, err
+			}
 			return result, shared.ErrorNotFound
 		}
 
@@ -176,6 +180,9 @@ func (r *Repository) UpsertRaceResult(ctx context.Context, result models.RaceRes
 		}
 		row = tx.QueryRow(ctx, query, args...)
 		if err := row.Scan(&exists); err != nil {
+			if !errors.Is(err, pgx.ErrNoRows) {
+				return result, err
+			}
 			return result, shared.ErrorNotFound
 		}
 	}
@@ -331,6 +338,9 @@ func (r *Repository) UpdateCarParticipantDrivers(ctx context.Context, carPartici
 	row := tx.QueryRow(ctx, query, args...)
 	var exists int
 	if err := row.Scan(&exists); err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return carParticipant, err
+		}
 		return carParticipant, shared.ErrorNotFound
 	}
 

@@ -22,7 +22,7 @@ func (repo *testRepo) UserLogin(ctx context.Context, user models.User) (models.U
 	if user.Name == "testName" && user.Password == hashPassword("testPassword") {
 		return models.User{Id: testUserID, Name: "testName", Role: models.RoleUser}, nil
 	}
-	return models.User{}, shared.ErrorNotFound
+	return models.User{}, shared.ErrorIncorrectPassword
 }
 
 func (repo *testRepo) UserRegister(ctx context.Context, user models.User) (models.User, error) {

@@ -24,14 +24,14 @@ func (h *Handler) ToggleFavouriteDriver(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	driver, ok := decodeJSONBody[models.Driver](w, r)
+	driver, ok := decodeJSONBody[models.Driver](h, w, r)
 	if !ok {
 		return
 	}
 
 	uc := users.NewToggleFavouriteDriverUseCase(h.Repo, user)
 	if err := uc.Run(r.Context(), driver); err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -56,14 +56,14 @@ func (h *Handler) ToggleFavouriteTeam(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	team, ok := decodeJSONBody[models.Team](w, r)
+	team, ok := decodeJSONBody[models.Team](h, w, r)
 	if !ok {
 		return
 	}
 
 	uc := users.NewToggleFavouriteTeamUseCase(h.Repo, user)
 	if err := uc.Run(r.Context(), team); err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 

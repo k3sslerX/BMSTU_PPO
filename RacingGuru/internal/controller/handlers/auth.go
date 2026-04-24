@@ -43,7 +43,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	request := ChangePasswordRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		h.sendError(w, "invalid request", "INVALID_REQUEST", http.StatusBadRequest)
+		h.sendLoggedError(w, r, "invalid request", "INVALID_REQUEST", http.StatusBadRequest, err)
 		return
 	}
 	if request.Password == "" {
@@ -56,7 +56,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := uc.Run(ctx, request.Password); err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	user := models.User{}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		h.sendError(w, "invalid request body", "INVALID_REQUEST_BODY", http.StatusBadRequest)
+		h.sendLoggedError(w, r, "invalid request body", "INVALID_REQUEST_BODY", http.StatusBadRequest, err)
 		return
 	}
 	if user.Email == "" || user.Password == "" {
@@ -88,7 +88,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	token, err := uc.Run(ctx, user)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	request := RegisterRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		h.sendError(w, "invalid request", "INVALID_REQUEST", http.StatusBadRequest)
+		h.sendLoggedError(w, r, "invalid request", "INVALID_REQUEST", http.StatusBadRequest, err)
 		return
 	}
 	if request.Email == "" || request.Password == "" {
@@ -133,14 +133,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	if request.Secret != "" {
 		if err := h.AdminSecrets.Validate(ctx, h.Repo, request.Secret); err != nil {
-			h.sendErrorExpanded(w, err)
+			h.sendErrorExpanded(w, r, err)
 			return
 		}
 		user.Role = models.RoleAdmin
 	}
 	user, err := uc.Run(ctx, user)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 	if request.Secret != "" && user.Role == models.RoleAdmin {
@@ -168,7 +168,7 @@ func (h *Handler) GenerateAdminSecret(w http.ResponseWriter, r *http.Request) {
 
 	secret, err := h.AdminSecrets.Generate(ctx, h.Repo)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 

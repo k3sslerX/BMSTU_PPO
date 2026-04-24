@@ -2,7 +2,9 @@ package repository
 
 import (
 	"RacingGuru/internal/models"
+	"RacingGuru/internal/shared"
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -342,6 +344,16 @@ func TestRepositoryStatsIntegration(t *testing.T) {
 		t.Fatalf("GetTeamByName() id = %v, want %v", foundTeam.Id, teamID)
 	}
 
+	_, err = fixture.repo.GetDriverByName(ctx, integrationName("missing-driver"))
+	if !errors.Is(err, shared.ErrorNotFound) {
+		t.Fatalf("GetDriverByName() missing error = %v, want %v", err, shared.ErrorNotFound)
+	}
+
+	_, err = fixture.repo.GetTeamByName(ctx, integrationName("missing-team"))
+	if !errors.Is(err, shared.ErrorNotFound) {
+		t.Fatalf("GetTeamByName() missing error = %v, want %v", err, shared.ErrorNotFound)
+	}
+
 	driverStats, err := fixture.repo.GetDriverStats(ctx, models.Driver{Id: driverID, Name: driverName})
 	if err != nil {
 		t.Fatalf("GetDriverStats() error = %v", err)
@@ -356,6 +368,30 @@ func TestRepositoryStatsIntegration(t *testing.T) {
 	}
 	if teamStats.Team.Id != teamID {
 		t.Fatalf("GetTeamStats() team id = %v, want %v", teamStats.Team.Id, teamID)
+	}
+
+	idleDriverID := uuid.New()
+	fixture.insertDriver(t, idleDriverID, integrationName("idle-driver"), "1992-04-05", "Idleland")
+
+	idleDriverStats, err := fixture.repo.GetDriverStats(ctx, models.Driver{Id: idleDriverID})
+	if err != nil {
+		t.Fatalf("GetDriverStats() for driver without results error = %v", err)
+	}
+	if idleDriverStats.Stats.TotalRaces != 0 || idleDriverStats.Stats.BestFinish != 0 ||
+		idleDriverStats.Stats.BestQualifying != 0 || idleDriverStats.Stats.BestChampionshipPosition != 0 {
+		t.Fatalf("GetDriverStats() for driver without results = %+v, want zero-value stats", idleDriverStats.Stats)
+	}
+
+	idleTeamID := uuid.New()
+	fixture.insertTeam(t, idleTeamID, integrationName("idle-team"), "Idleland")
+
+	idleTeamStats, err := fixture.repo.GetTeamStats(ctx, models.Team{Id: idleTeamID})
+	if err != nil {
+		t.Fatalf("GetTeamStats() for team without results error = %v", err)
+	}
+	if idleTeamStats.Stats.TotalRaces != 0 || idleTeamStats.Stats.BestFinish != 0 ||
+		idleTeamStats.Stats.BestQualifying != 0 || idleTeamStats.Stats.BestChampionshipPosition != 0 {
+		t.Fatalf("GetTeamStats() for team without results = %+v, want zero-value stats", idleTeamStats.Stats)
 	}
 }
 

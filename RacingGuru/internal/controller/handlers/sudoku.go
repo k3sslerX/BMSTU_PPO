@@ -23,7 +23,7 @@ func (h *Handler) SudokuDrivers(w http.ResponseWriter, r *http.Request) {
 	uc := sudoku.NewGetDriverMatrixUseCase(h.Repo, user)
 	matrix, err := uc.Run(r.Context())
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (h *Handler) SudokuTeams(w http.ResponseWriter, r *http.Request) {
 	uc := sudoku.NewGetTeamMatrixUseCase(h.Repo, user)
 	matrix, err := uc.Run(r.Context())
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
