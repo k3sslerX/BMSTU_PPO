@@ -17,7 +17,7 @@ RUN addgroup -S app && adduser -S app -G app
 
 COPY --from=builder /out/racingguru /app/racingguru
 
-ENV SERVER_ADDR=:
+ENV SERVER_ADDR=
 ENV DATABASE_URL=
 ENV LOG_LEVEL=
 ENV LOG_FILE=
