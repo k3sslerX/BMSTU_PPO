@@ -35,9 +35,11 @@ services:
       ]
 
   app:
+    image: ${APP_IMAGE_NAME:-racingguru-app}:${APP_IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
     container_name: ${APP_CONTAINER_NAME:-racingguru-app}
     restart: unless-stopped
     depends_on:
@@ -46,6 +48,7 @@ services:
     environment:
       SERVER_ADDR: ${SERVER_ADDR:-:8080}
       DATABASE_URL: ${APP_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FILE: ${LOG_FILE:-}
     volumes:

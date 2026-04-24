@@ -9,6 +9,8 @@ import (
 )
 
 func TestUserLoginUseCase(t *testing.T) {
+	t.Setenv("JWT_SECRET_KEY", "test-jwt-secret")
+
 	repo := &testRepo{}
 	var err error
 

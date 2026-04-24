@@ -1,6 +1,7 @@
 package main
 
 import (
+	"RacingGuru/internal/auth"
 	"RacingGuru/internal/controller/handlers"
 	"RacingGuru/internal/controller/server"
 	"RacingGuru/internal/logger"
@@ -36,6 +37,11 @@ func main() {
 	appLogger, err := logger.New(logLevel, logOutput)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to initialize logger: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err = auth.ValidateJWTSecretKey(); err != nil {
+		appLogger.Errorf("jwt configuration failed: %v", err)
 		os.Exit(1)
 	}
 
