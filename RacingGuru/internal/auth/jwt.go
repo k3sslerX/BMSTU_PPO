@@ -4,14 +4,22 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"fmt"
+	"os"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
+func ValidateJWTSecretKey() error {
+	_, err := jwtSecretKey()
+	return err
+}
+
 func GenerateToken(user models.User) (string, error) {
-	//secretKey := os.Getenv("JWT_SECRET_KEY")
-	secretKey := "secretKey"
+	secretKey, err := jwtSecretKey()
+	if err != nil {
+		return "", err
+	}
 	userID := user.Id.String()
 	role := string(user.Role)
 
@@ -26,14 +34,16 @@ func GenerateToken(user models.User) (string, error) {
 }
 
 func ParseToken(tokenString string) (models.User, error) {
-	//secretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
-	secretKey := []byte("secretKey")
+	secretKey, err := jwtSecretKey()
+	if err != nil {
+		return models.User{}, err
+	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return secretKey, nil
+		return []byte(secretKey), nil
 	})
 
 	if err != nil {
@@ -53,4 +63,13 @@ func ParseToken(tokenString string) (models.User, error) {
 	}
 
 	return models.User{}, shared.ErrorInvalidToken
+}
+
+func jwtSecretKey() (string, error) {
+	secretKey := os.Getenv("JWT_SECRET_KEY")
+	if secretKey == "" {
+		return "", fmt.Errorf("JWT_SECRET_KEY is not set")
+	}
+
+	return secretKey, nil
 }

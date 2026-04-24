@@ -77,6 +77,9 @@ func (r *Repository) UserLogin(ctx context.Context, user models.User) (models.Us
 	row := r.Pool.QueryRow(ctx, query, args...)
 	err = row.Scan(&id, &name, &password, &role)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return user, shared.ErrorIncorrectPassword
+		}
 		return user, err
 	}
 	if password != user.Password {

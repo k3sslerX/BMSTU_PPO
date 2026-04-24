@@ -18,16 +18,10 @@ func (h *Handler) requireUser(w http.ResponseWriter, r *http.Request) (models.Us
 	return user, true
 }
 
-func decodeJSONBody[T any](w http.ResponseWriter, r *http.Request) (T, bool) {
+func decodeJSONBody[T any](h *Handler, w http.ResponseWriter, r *http.Request) (T, bool) {
 	var payload T
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		response := ErrorResponse{}
-		response.Error.Code = "INVALID_REQUEST"
-		response.Error.Message = "invalid request"
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(response)
+		h.sendLoggedError(w, r, "invalid request", "INVALID_REQUEST", http.StatusBadRequest, err)
 		return payload, false
 	}
 	return payload, true
@@ -57,7 +51,7 @@ func (h *Handler) CreateDriver(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	driver, ok := decodeJSONBody[models.Driver](w, r)
+	driver, ok := decodeJSONBody[models.Driver](h, w, r)
 	if !ok {
 		return
 	}
@@ -65,7 +59,7 @@ func (h *Handler) CreateDriver(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewCreateDriverUseCase(h.Repo, user)
 	created, err := uc.Run(r.Context(), driver)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -91,7 +85,7 @@ func (h *Handler) UpdateDriver(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	driver, ok := decodeJSONBody[models.Driver](w, r)
+	driver, ok := decodeJSONBody[models.Driver](h, w, r)
 	if !ok {
 		return
 	}
@@ -99,7 +93,7 @@ func (h *Handler) UpdateDriver(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewUpdateDriverUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), driver)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -127,14 +121,14 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, ok := decodeJSONBody[UpdateUserRoleRequest](w, r)
+	request, ok := decodeJSONBody[UpdateUserRoleRequest](h, w, r)
 	if !ok {
 		return
 	}
 
 	userID, err := uuid.Parse(request.Id)
 	if err != nil {
-		h.sendError(w, "invalid data", "INVALID_DATA", http.StatusBadRequest)
+		h.sendLoggedError(w, r, "invalid data", "INVALID_DATA", http.StatusBadRequest, err)
 		return
 	}
 
@@ -144,7 +138,7 @@ func (h *Handler) UpdateUserRole(w http.ResponseWriter, r *http.Request) {
 		Role: request.Role,
 	})
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -169,7 +163,7 @@ func (h *Handler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	team, ok := decodeJSONBody[models.Team](w, r)
+	team, ok := decodeJSONBody[models.Team](h, w, r)
 	if !ok {
 		return
 	}
@@ -177,7 +171,7 @@ func (h *Handler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewCreateTeamUseCase(h.Repo, user)
 	created, err := uc.Run(r.Context(), team)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -203,7 +197,7 @@ func (h *Handler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	team, ok := decodeJSONBody[models.Team](w, r)
+	team, ok := decodeJSONBody[models.Team](h, w, r)
 	if !ok {
 		return
 	}
@@ -211,7 +205,7 @@ func (h *Handler) UpdateTeam(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewUpdateTeamUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), team)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -236,7 +230,7 @@ func (h *Handler) CreateTrack(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	track, ok := decodeJSONBody[models.Track](w, r)
+	track, ok := decodeJSONBody[models.Track](h, w, r)
 	if !ok {
 		return
 	}
@@ -244,7 +238,7 @@ func (h *Handler) CreateTrack(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewCreateTrackUseCase(h.Repo, user)
 	created, err := uc.Run(r.Context(), track)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -270,7 +264,7 @@ func (h *Handler) UpdateTrack(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	track, ok := decodeJSONBody[models.Track](w, r)
+	track, ok := decodeJSONBody[models.Track](h, w, r)
 	if !ok {
 		return
 	}
@@ -278,7 +272,7 @@ func (h *Handler) UpdateTrack(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewUpdateTrackUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), track)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -303,7 +297,7 @@ func (h *Handler) CreateRace(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	race, ok := decodeJSONBody[models.Race](w, r)
+	race, ok := decodeJSONBody[models.Race](h, w, r)
 	if !ok {
 		return
 	}
@@ -311,7 +305,7 @@ func (h *Handler) CreateRace(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewCreateRaceUseCase(h.Repo, user)
 	created, err := uc.Run(r.Context(), race)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -337,7 +331,7 @@ func (h *Handler) UpdateRace(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	race, ok := decodeJSONBody[models.Race](w, r)
+	race, ok := decodeJSONBody[models.Race](h, w, r)
 	if !ok {
 		return
 	}
@@ -345,7 +339,7 @@ func (h *Handler) UpdateRace(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewUpdateRaceUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), race)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -370,7 +364,7 @@ func (h *Handler) CreateCarParticipant(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	carParticipant, ok := decodeJSONBody[models.CarParticipant](w, r)
+	carParticipant, ok := decodeJSONBody[models.CarParticipant](h, w, r)
 	if !ok {
 		return
 	}
@@ -378,7 +372,7 @@ func (h *Handler) CreateCarParticipant(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewCreateCarParticipantUseCase(h.Repo, user)
 	created, err := uc.Run(r.Context(), carParticipant)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -404,7 +398,7 @@ func (h *Handler) UpdateCarParticipant(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	carParticipant, ok := decodeJSONBody[models.CarParticipant](w, r)
+	carParticipant, ok := decodeJSONBody[models.CarParticipant](h, w, r)
 	if !ok {
 		return
 	}
@@ -412,7 +406,7 @@ func (h *Handler) UpdateCarParticipant(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewUpdateCarParticipantUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), carParticipant)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -438,7 +432,7 @@ func (h *Handler) UpdateCarParticipantDrivers(w http.ResponseWriter, r *http.Req
 	if !ok {
 		return
 	}
-	carParticipant, ok := decodeJSONBody[models.CarParticipant](w, r)
+	carParticipant, ok := decodeJSONBody[models.CarParticipant](h, w, r)
 	if !ok {
 		return
 	}
@@ -446,7 +440,7 @@ func (h *Handler) UpdateCarParticipantDrivers(w http.ResponseWriter, r *http.Req
 	uc := admin.NewUpdateCarParticipantDriversUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), carParticipant)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 
@@ -472,7 +466,7 @@ func (h *Handler) UpsertRaceResult(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	result, ok := decodeJSONBody[models.RaceResult](w, r)
+	result, ok := decodeJSONBody[models.RaceResult](h, w, r)
 	if !ok {
 		return
 	}
@@ -480,7 +474,7 @@ func (h *Handler) UpsertRaceResult(w http.ResponseWriter, r *http.Request) {
 	uc := admin.NewUpsertRaceResultUseCase(h.Repo, user)
 	updated, err := uc.Run(r.Context(), result)
 	if err != nil {
-		h.sendErrorExpanded(w, err)
+		h.sendErrorExpanded(w, r, err)
 		return
 	}
 

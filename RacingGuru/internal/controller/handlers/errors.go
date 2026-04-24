@@ -4,45 +4,71 @@ import (
 	"RacingGuru/internal/shared"
 	"errors"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
 )
 
-func (h *Handler) sendErrorExpanded(w http.ResponseWriter, err error) {
+func (h *Handler) sendErrorExpanded(w http.ResponseWriter, r *http.Request, err error) {
+	message, code, status := mapError(err)
+	h.logRequestError(r, err, code, status)
+	h.sendError(w, message, code, status)
+}
+
+func (h *Handler) sendLoggedError(w http.ResponseWriter, r *http.Request, message, code string, status int, err error) {
+	h.logRequestError(r, err, code, status)
+	h.sendError(w, message, code, status)
+}
+
+func mapError(err error) (message, code string, status int) {
 	if errors.Is(err, shared.ErrorPermissionDenied) {
-		h.sendError(w, "invalid request", "INVALID_REQUEST", http.StatusForbidden)
-		return
+		return "invalid request", "INVALID_REQUEST", http.StatusForbidden
 	}
 	if errors.Is(err, shared.ErrorNotFound) {
-		h.sendError(w, "not found", "NOT_FOUND", http.StatusNotFound)
-		return
+		return "not found", "NOT_FOUND", http.StatusNotFound
 	}
 	if errors.Is(err, shared.ErrorUserAlreadyExists) {
-		h.sendError(w, "user already exists", "USER_ALREADY_EXISTS", http.StatusConflict)
-		return
+		return "user already exists", "USER_ALREADY_EXISTS", http.StatusConflict
 	}
 	if errors.Is(err, shared.ErrorAdminAlreadyExists) {
-		h.sendError(w, "admin already exists", "ADMIN_ALREADY_EXISTS", http.StatusConflict)
-		return
+		return "admin already exists", "ADMIN_ALREADY_EXISTS", http.StatusConflict
 	}
 	if errors.Is(err, shared.ErrorAdminSecretAlreadyIssued) {
-		h.sendError(w, "admin secret already issued", "ADMIN_SECRET_ALREADY_ISSUED", http.StatusConflict)
-		return
+		return "admin secret already issued", "ADMIN_SECRET_ALREADY_ISSUED", http.StatusConflict
 	}
 	if errors.Is(err, shared.ErrorInvalidAdminSecret) {
-		h.sendError(w, "invalid admin secret", "INVALID_ADMIN_SECRET", http.StatusForbidden)
-		return
+		return "invalid admin secret", "INVALID_ADMIN_SECRET", http.StatusForbidden
 	}
 	if errors.Is(err, shared.ErrorInvalidToken) {
-		h.sendError(w, "invalid token", "INVALID_TOKEN", http.StatusForbidden)
-		return
+		return "invalid token", "INVALID_TOKEN", http.StatusForbidden
 	}
 	if errors.Is(err, shared.ErrorIncorrectPassword) {
-		h.sendError(w, "invalid password", "INVALID_PASSWORD", http.StatusForbidden)
-		return
+		return "invalid password", "INVALID_PASSWORD", http.StatusForbidden
 	}
 	if errors.Is(err, shared.ErrorInvalidData) {
-		h.sendError(w, "invalid data", "INVALID_DATA", http.StatusForbidden)
+		return "invalid data", "INVALID_DATA", http.StatusForbidden
+	}
+	return "internal server error", "INTERNAL_ERROR", http.StatusInternalServerError
+}
+
+func (h *Handler) logRequestError(r *http.Request, err error, code string, status int) {
+	args := []any{
+		"error", err,
+		"code", code,
+		"status", status,
+	}
+
+	if r != nil {
+		args = append(args,
+			"method", r.Method,
+			"path", r.URL.Path,
+			"request_id", middleware.GetReqID(r.Context()),
+		)
+	}
+
+	if status >= http.StatusInternalServerError {
+		h.Logger.Error("request failed", args...)
 		return
 	}
-	h.sendError(w, "internal server error", "INTERNAL_ERROR", http.StatusInternalServerError)
-	return
+
+	h.Logger.Warn("request failed", args...)
 }

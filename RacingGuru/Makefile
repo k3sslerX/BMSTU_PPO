@@ -5,7 +5,7 @@ SWAGGER_OUT := internal/controller/handlers/assets/swagger/swagger.yaml
 SWAGGER_JSON := internal/controller/handlers/assets/swagger/swagger.json
 GO_BUILD_CACHE := $(CURDIR)/.cache/go-build
 
-.PHONY: swagger swagger-install clean-swagger
+.PHONY: swagger swagger-install clean-swagger docker-build-app docker-recreate-app
 
 swagger: $(SWAGGER_OUT)
 
@@ -21,3 +21,9 @@ swagger-install:
 
 clean-swagger:
 	rm -f $(SWAGGER_OUT) $(SWAGGER_JSON)
+
+docker-build-app:
+	docker compose build app
+
+docker-recreate-app:
+	docker compose up -d --no-deps --force-recreate app

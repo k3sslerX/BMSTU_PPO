@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"RacingGuru/internal/core/auth"
+	"RacingGuru/internal/logger"
 	"encoding/json"
 	"net/http"
 
@@ -12,6 +13,7 @@ import (
 type Handler struct {
 	Repo         Repo
 	AdminSecrets *auth.AdminSecretManager
+	Logger       *logger.Logger
 }
 
 type ErrorResponse struct {
@@ -21,15 +23,15 @@ type ErrorResponse struct {
 	} `json:"error"`
 }
 
-func NewHandler(repo Repo) *Handler {
-	return &Handler{Repo: repo, AdminSecrets: auth.NewAdminSecretManager()}
+func NewHandler(repo Repo, logger *logger.Logger) *Handler {
+	return &Handler{Repo: repo, AdminSecrets: auth.NewAdminSecretManager(), Logger: logger}
 }
 
 func (h *Handler) Routes() http.Handler {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
+	r.Use(h.requestLoggingMiddleware)
+	r.Use(h.recovererMiddleware)
 
 	r.HandleFunc("/", h.Info)
 	r.Get("/swagger.yaml", h.SwaggerSpec)
@@ -76,6 +78,10 @@ func (h *Handler) Routes() http.Handler {
 }
 
 func (h *Handler) sendError(w http.ResponseWriter, message, code string, status int) {
+	writeErrorResponse(w, message, code, status)
+}
+
+func writeErrorResponse(w http.ResponseWriter, message, code string, status int) {
 	response := ErrorResponse{}
 	response.Error.Code = code
 	response.Error.Message = message

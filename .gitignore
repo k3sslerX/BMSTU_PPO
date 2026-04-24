@@ -4,3 +4,5 @@
 *.cov
 .gocache
 exec*
+.env
+logs

@@ -1,0 +1,53 @@
+ALTER TABLE IF EXISTS ONLY public.team_p DROP CONSTRAINT IF EXISTS team_p_driver_fkey;
+ALTER TABLE IF EXISTS ONLY public.team_p DROP CONSTRAINT IF EXISTS team_p_car_p_fkey;
+ALTER TABLE IF EXISTS ONLY public.race DROP CONSTRAINT IF EXISTS race_track_fkey;
+ALTER TABLE IF EXISTS ONLY public.race DROP CONSTRAINT IF EXISTS race_championship_fkey;
+ALTER TABLE IF EXISTS ONLY public.qualifying DROP CONSTRAINT IF EXISTS qualifying_race_fkey;
+ALTER TABLE IF EXISTS ONLY public.qualifying DROP CONSTRAINT IF EXISTS qualifying_car_p_fkey;
+ALTER TABLE IF EXISTS ONLY public.favourite_teams DROP CONSTRAINT IF EXISTS fteams_team_fk;
+ALTER TABLE IF EXISTS ONLY public.favourite_teams DROP CONSTRAINT IF EXISTS fteam_user_id_fk;
+ALTER TABLE IF EXISTS ONLY public.finish DROP CONSTRAINT IF EXISTS finish_race_fkey;
+ALTER TABLE IF EXISTS ONLY public.finish DROP CONSTRAINT IF EXISTS finish_car_p_fkey;
+ALTER TABLE IF EXISTS ONLY public.favourite_drivers DROP CONSTRAINT IF EXISTS fdrivers_user_id_fk;
+ALTER TABLE IF EXISTS ONLY public.favourite_drivers DROP CONSTRAINT IF EXISTS fdrivers_driver_fk;
+ALTER TABLE IF EXISTS ONLY public.championship DROP CONSTRAINT IF EXISTS championship_organizer_fkey;
+ALTER TABLE IF EXISTS ONLY public.car DROP CONSTRAINT IF EXISTS car_raceclass_fkey;
+ALTER TABLE IF EXISTS ONLY public.car_p DROP CONSTRAINT IF EXISTS car_p_team_fkey;
+ALTER TABLE IF EXISTS ONLY public.car_p DROP CONSTRAINT IF EXISTS car_p_car_fkey;
+ALTER TABLE IF EXISTS ONLY public.car DROP CONSTRAINT IF EXISTS car_manufacturer_fkey;
+
+ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY public.driver DROP CONSTRAINT IF EXISTS unique_driver;
+ALTER TABLE IF EXISTS ONLY public.track DROP CONSTRAINT IF EXISTS track_pkey;
+ALTER TABLE IF EXISTS ONLY public.team DROP CONSTRAINT IF EXISTS team_pkey;
+ALTER TABLE IF EXISTS ONLY public.raceclass DROP CONSTRAINT IF EXISTS raceclass_pkey;
+ALTER TABLE IF EXISTS ONLY public.race DROP CONSTRAINT IF EXISTS race_pkey;
+ALTER TABLE IF EXISTS ONLY public.organizer DROP CONSTRAINT IF EXISTS organizer_pkey;
+ALTER TABLE IF EXISTS ONLY public.manufacturer DROP CONSTRAINT IF EXISTS manufacturer_pkey;
+ALTER TABLE IF EXISTS ONLY public.driver DROP CONSTRAINT IF EXISTS driver_pkey;
+ALTER TABLE IF EXISTS ONLY public.championship DROP CONSTRAINT IF EXISTS championship_pkey;
+ALTER TABLE IF EXISTS ONLY public.car DROP CONSTRAINT IF EXISTS car_pkey;
+ALTER TABLE IF EXISTS ONLY public.car_p DROP CONSTRAINT IF EXISTS car_p_pkey;
+
+DROP TABLE IF EXISTS public.users;
+DROP TABLE IF EXISTS public.track;
+DROP TABLE IF EXISTS public.team_p;
+DROP TABLE IF EXISTS public.team;
+DROP TABLE IF EXISTS public.raceclass;
+DROP TABLE IF EXISTS public.race;
+DROP TABLE IF EXISTS public.qualifying;
+DROP TABLE IF EXISTS public.organizer;
+DROP TABLE IF EXISTS public.manufacturer;
+DROP TABLE IF EXISTS public.finish;
+DROP TABLE IF EXISTS public.favourite_teams;
+DROP TABLE IF EXISTS public.favourite_drivers;
+DROP TABLE IF EXISTS public.driver;
+DROP TABLE IF EXISTS public.championship;
+DROP TABLE IF EXISTS public.car_p;
+DROP TABLE IF EXISTS public.car;
+
+DROP FUNCTION IF EXISTS public.calculateteamstats(uuid);
+DROP FUNCTION IF EXISTS public.calculatedriverstats(uuid);
+DROP FUNCTION IF EXISTS public.calculatepersonalpoints(uuid);
+
+DROP EXTENSION IF EXISTS "uuid-ossp";

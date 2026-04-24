@@ -9,6 +9,8 @@ import (
 )
 
 func TestUserLoginUseCase(t *testing.T) {
+	t.Setenv("JWT_SECRET_KEY", "test-jwt-secret")
+
 	repo := &testRepo{}
 	var err error
 
@@ -20,7 +22,7 @@ func TestUserLoginUseCase(t *testing.T) {
 
 	testUc2 := NewUserLoginUseCase(repo)
 	_, err = testUc2.Run(context.Background(), models.User{Name: "someName", Password: "somePassword"})
-	if !errors.Is(err, shared.ErrorNotFound) {
+	if !errors.Is(err, shared.ErrorIncorrectPassword) {
 		t.Error(err)
 	}
 }
