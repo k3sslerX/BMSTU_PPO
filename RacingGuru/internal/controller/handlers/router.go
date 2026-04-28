@@ -40,6 +40,8 @@ func (h *Handler) Routes() http.Handler {
 	r.Post("/login", h.Login)
 	r.Post("/register", h.Register)
 	r.Post("/setup/admin-secret", h.GenerateAdminSecret)
+	r.Get("/drivers", h.ListDrivers)
+	r.Get("/teams", h.ListTeams)
 
 	r.Route("/stats", func(r chi.Router) {
 		r.Get("/driver", h.StatsDriver)
@@ -50,6 +52,7 @@ func (h *Handler) Routes() http.Handler {
 		r.Use(h.authMiddleware)
 		r.Post("/change-password", h.ChangePassword)
 		r.Route("/users", func(r chi.Router) {
+			r.Get("/favourites", h.ListFavourites)
 			r.Post("/favourite-driver", h.ToggleFavouriteDriver)
 			r.Post("/favourite-team", h.ToggleFavouriteTeam)
 		})

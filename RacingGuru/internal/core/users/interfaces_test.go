@@ -34,6 +34,16 @@ func (repo *testRepo) ToggleFavouriteDriver(ctx context.Context, user models.Use
 	return nil
 }
 
+func (repo *testRepo) ListFavouriteDrivers(ctx context.Context, user models.User) ([]models.Driver, error) {
+	drivers := make([]models.Driver, 0)
+	for _, row := range repo.favouriteDrivers {
+		if row.userID == user.Id {
+			drivers = append(drivers, models.Driver{Id: row.driverID})
+		}
+	}
+	return drivers, nil
+}
+
 func (repo *testRepo) ToggleFavouriteTeam(ctx context.Context, user models.User, team models.Team) error {
 	for i, row := range repo.favouriteTeams {
 		if row.userID == user.Id && row.teamID == team.Id {
@@ -43,6 +53,16 @@ func (repo *testRepo) ToggleFavouriteTeam(ctx context.Context, user models.User,
 	}
 	repo.favouriteTeams = append(repo.favouriteTeams, favouriteTeamRow{userID: user.Id, teamID: team.Id})
 	return nil
+}
+
+func (repo *testRepo) ListFavouriteTeams(ctx context.Context, user models.User) ([]models.Team, error) {
+	teams := make([]models.Team, 0)
+	for _, row := range repo.favouriteTeams {
+		if row.userID == user.Id {
+			teams = append(teams, models.Team{Id: row.teamID})
+		}
+	}
+	return teams, nil
 }
 
 func (repo *testRepo) hasFavouriteDriver(userID uuid.UUID, driverID uuid.UUID) bool {

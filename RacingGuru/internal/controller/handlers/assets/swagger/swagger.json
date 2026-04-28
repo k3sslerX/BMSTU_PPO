@@ -972,6 +972,42 @@
                 }
             }
         },
+        "/drivers": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "List drivers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Optional case-insensitive name filter",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Driver"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "consumes": [
@@ -1315,6 +1351,42 @@
                 }
             }
         },
+        "/teams": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "List teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Optional case-insensitive name filter",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Team"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/favourite-driver": {
             "post": {
                 "consumes": [
@@ -1436,18 +1508,49 @@
                     }
                 }
             }
+        },
+        "/users/favourites": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List favourite drivers and teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.FavouritesResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "handlers.ChangePasswordRequest": {
-            "type": "object",
-            "properties": {
-                "password": {
-                    "type": "string",
-                    "example": "newSecret123"
-                }
-            }
-        },
         "handlers.AuthUserResponse": {
             "type": "object",
             "properties": {
@@ -1464,21 +1567,21 @@
                         "admin",
                         "user"
                     ],
-                    "example": "user",
                     "allOf": [
                         {
                             "$ref": "#/definitions/models.Role"
                         }
-                    ]
+                    ],
+                    "example": "user"
                 }
             }
         },
-        "handlers.GenerateAdminSecretResponse": {
+        "handlers.ChangePasswordRequest": {
             "type": "object",
             "properties": {
-                "secret": {
+                "password": {
                     "type": "string",
-                    "example": "WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf"
+                    "example": "newSecret123"
                 }
             }
         },
@@ -1503,6 +1606,32 @@
                             "type": "string"
                         }
                     }
+                }
+            }
+        },
+        "handlers.FavouritesResponse": {
+            "type": "object",
+            "properties": {
+                "favourite_drivers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Driver"
+                    }
+                },
+                "favourite_teams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Team"
+                    }
+                }
+            }
+        },
+        "handlers.GenerateAdminSecretResponse": {
+            "type": "object",
+            "properties": {
+                "secret": {
+                    "type": "string",
+                    "example": "WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf"
                 }
             }
         },

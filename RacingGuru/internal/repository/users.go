@@ -142,6 +142,76 @@ func (r *Repository) UpdateUserRole(ctx context.Context, user models.User) (mode
 	return user, nil
 }
 
+func (r *Repository) ListFavouriteDrivers(ctx context.Context, user models.User) ([]models.Driver, error) {
+	query, args, err := statementBuilder().
+		Select("d.id", "d.name", "d.birthday", "d.nationality").
+		From("favourite_drivers fd").
+		Join("driver d ON d.id = fd.driver").
+		Where(sq.Eq{"fd.user_id": user.Id}).
+		OrderBy("d.name ASC").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	drivers := make([]models.Driver, 0)
+	for rows.Next() {
+		var driver models.Driver
+		var birthday time.Time
+		if err := rows.Scan(&driver.Id, &driver.Name, &birthday, &driver.Nationality); err != nil {
+			return nil, err
+		}
+		driver.Birthday = birthday.Format(time.DateOnly)
+		drivers = append(drivers, driver)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return drivers, nil
+}
+
+func (r *Repository) ListFavouriteTeams(ctx context.Context, user models.User) ([]models.Team, error) {
+	query, args, err := statementBuilder().
+		Select("t.id", "t.name", "t.country").
+		From("favourite_teams ft").
+		Join("team t ON t.id = ft.team").
+		Where(sq.Eq{"ft.user_id": user.Id}).
+		OrderBy("t.name ASC").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	teams := make([]models.Team, 0)
+	for rows.Next() {
+		var team models.Team
+		if err := rows.Scan(&team.Id, &team.Name, &team.Country); err != nil {
+			return nil, err
+		}
+		teams = append(teams, team)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return teams, nil
+}
+
 func (r *Repository) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {
 	query, args, err := statementBuilder().
 		Select("1").

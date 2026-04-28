@@ -13,6 +13,82 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
+func (r *Repository) ListDrivers(ctx context.Context, query string) ([]models.Driver, error) {
+	builder := statementBuilder().
+		Select("id", "name", "birthday", "nationality").
+		From("driver").
+		OrderBy("name ASC")
+
+	if query != "" {
+		builder = builder.Where(sq.ILike{"name": "%" + query + "%"})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	drivers := make([]models.Driver, 0)
+	for rows.Next() {
+		var driver models.Driver
+		var birthday time.Time
+		if err := rows.Scan(&driver.Id, &driver.Name, &birthday, &driver.Nationality); err != nil {
+			return nil, err
+		}
+		driver.Birthday = birthday.Format(time.DateOnly)
+		drivers = append(drivers, driver)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return drivers, nil
+}
+
+func (r *Repository) ListTeams(ctx context.Context, query string) ([]models.Team, error) {
+	builder := statementBuilder().
+		Select("id", "name", "country").
+		From("team").
+		OrderBy("name ASC")
+
+	if query != "" {
+		builder = builder.Where(sq.ILike{"name": "%" + query + "%"})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	teams := make([]models.Team, 0)
+	for rows.Next() {
+		var team models.Team
+		if err := rows.Scan(&team.Id, &team.Name, &team.Country); err != nil {
+			return nil, err
+		}
+		teams = append(teams, team)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return teams, nil
+}
+
 func (r *Repository) GetDriverStats(ctx context.Context, driver models.Driver) (models.DriverStats, error) {
 	driverStats := models.DriverStats{}
 	driverStats.Driver = driver

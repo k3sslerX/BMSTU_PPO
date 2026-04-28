@@ -1,0 +1,16 @@
+TRUNCATE TABLE
+    public.finish,
+    public.qualifying,
+    public.team_p,
+    public.favourite_drivers,
+    public.favourite_teams,
+    public.race,
+    public.car_p,
+    public.car,
+    public.championship,
+    public.driver,
+    public.track,
+    public.team,
+    public.raceclass,
+    public.organizer,
+    public.manufacturer;

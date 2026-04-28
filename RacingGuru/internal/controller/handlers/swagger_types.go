@@ -33,6 +33,11 @@ type ChangePasswordRequest struct {
 	Password string `json:"password" example:"newSecret123"`
 }
 
+type FavouritesResponse struct {
+	FavouriteDrivers []models.Driver `json:"favourite_drivers"`
+	FavouriteTeams   []models.Team   `json:"favourite_teams"`
+}
+
 type DriverStatsResponse struct {
 	Stats models.DriverStats `json:"driver_stats"`
 }

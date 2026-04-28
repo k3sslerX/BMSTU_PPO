@@ -1,11 +1,5 @@
 basePath: /
 definitions:
-  handlers.ChangePasswordRequest:
-    properties:
-      password:
-        example: newSecret123
-        type: string
-    type: object
   handlers.AuthUserResponse:
     properties:
       email:
@@ -22,10 +16,10 @@ definitions:
         - user
         example: user
     type: object
-  handlers.GenerateAdminSecretResponse:
+  handlers.ChangePasswordRequest:
     properties:
-      secret:
-        example: WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf
+      password:
+        example: newSecret123
         type: string
     type: object
   handlers.DriverStatsResponse:
@@ -42,6 +36,23 @@ definitions:
           message:
             type: string
         type: object
+    type: object
+  handlers.FavouritesResponse:
+    properties:
+      favourite_drivers:
+        items:
+          $ref: '#/definitions/models.Driver'
+        type: array
+      favourite_teams:
+        items:
+          $ref: '#/definitions/models.Team'
+        type: array
+    type: object
+  handlers.GenerateAdminSecretResponse:
+    properties:
+      secret:
+        example: WQ3mYvB1d8jK2s4Qn7LpT0xZc5RaE9Uf
+        type: string
     type: object
   handlers.LoginRequest:
     properties:
@@ -930,6 +941,29 @@ paths:
       summary: Swagger UI
       tags:
       - system
+  /drivers:
+    get:
+      parameters:
+      - description: Optional case-insensitive name filter
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Driver'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List drivers
+      tags:
+      - stats
   /login:
     post:
       consumes:
@@ -963,9 +997,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Registers a new user. If a valid one-time `secret` is provided, registers the first admin instead.
+      description: Registers a new user. If a valid one-time `secret` is provided,
+        registers the first admin instead.
       parameters:
-      - description: Registration payload. Optional secret promotes the first user to admin
+      - description: Registration payload. Optional secret promotes the first user
+          to admin
         in: body
         name: request
         required: true
@@ -1001,7 +1037,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Generates a one-time secret that can be passed in `/register` to create the first admin user.
+      description: Generates a one-time secret that can be passed in `/register` to
+        create the first admin user.
       produces:
       - application/json
       responses:
@@ -1154,6 +1191,29 @@ paths:
       summary: OpenAPI specification
       tags:
       - system
+  /teams:
+    get:
+      parameters:
+      - description: Optional case-insensitive name filter
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Team'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List teams
+      tags:
+      - stats
   /users/favourite-driver:
     post:
       consumes:
@@ -1232,6 +1292,32 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Toggle favourite team
+      tags:
+      - users
+  /users/favourites:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.FavouritesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List favourite drivers and teams
       tags:
       - users
 swagger: "2.0"

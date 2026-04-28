@@ -5,9 +5,48 @@ import (
 	"RacingGuru/internal/models"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
+
+// ListDrivers godoc
+// @Summary List drivers
+// @Tags stats
+// @Produce json
+// @Param q query string false "Optional case-insensitive name filter"
+// @Success 200 {array} models.Driver
+// @Failure 500 {object} ErrorResponse
+// @Router /drivers [get]
+func (h *Handler) ListDrivers(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	drivers, err := h.Repo.ListDrivers(r.Context(), query)
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, drivers)
+}
+
+// ListTeams godoc
+// @Summary List teams
+// @Tags stats
+// @Produce json
+// @Param q query string false "Optional case-insensitive name filter"
+// @Success 200 {array} models.Team
+// @Failure 500 {object} ErrorResponse
+// @Router /teams [get]
+func (h *Handler) ListTeams(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	teams, err := h.Repo.ListTeams(r.Context(), query)
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, teams)
+}
 
 // StatsDriver godoc
 // @Summary Driver statistics

@@ -3,8 +3,39 @@ package handlers
 import (
 	"RacingGuru/internal/core/users"
 	"RacingGuru/internal/models"
+	"encoding/json"
 	"net/http"
 )
+
+// ListFavourites godoc
+// @Summary List favourite drivers and teams
+// @Tags users
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Success 200 {object} FavouritesResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /users/favourites [get]
+func (h *Handler) ListFavourites(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+
+	uc := users.NewListFavouritesUseCase(h.Repo, user)
+	drivers, teams, err := uc.Run(r.Context())
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(FavouritesResponse{
+		FavouriteDrivers: drivers,
+		FavouriteTeams:   teams,
+	})
+}
 
 // ToggleFavouriteDriver godoc
 // @Summary Toggle favourite driver
