@@ -5,10 +5,19 @@ import (
 	"RacingGuru/internal/shared"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
+
+const tokenTTL = 72 * time.Hour
+
+type tokenClaims struct {
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
+	jwt.RegisteredClaims
+}
 
 func ValidateJWTSecretKey() error {
 	_, err := jwtSecretKey()
@@ -23,10 +32,14 @@ func GenerateToken(user models.User) (string, error) {
 	userID := user.Id.String()
 	role := string(user.Role)
 
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"role":    role,
-		//"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	now := time.Now()
+	claims := tokenClaims{
+		UserID: userID,
+		Role:   role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(now.Add(tokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(now),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -39,30 +52,28 @@ func ParseToken(tokenString string) (models.User, error) {
 		return models.User{}, err
 	}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	claims := &tokenClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return []byte(secretKey), nil
-	})
+	}, jwt.WithExpirationRequired())
 
 	if err != nil {
 		return models.User{}, shared.ErrorInvalidToken
 	}
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if userID, ok := claims["user_id"].(string); ok {
-			if role, ok := claims["role"].(string); ok {
-				parsedUserID, err := uuid.Parse(userID)
-				if err != nil {
-					return models.User{}, shared.ErrorInvalidToken
-				}
-				return models.User{Id: parsedUserID, Role: models.Role(role)}, nil
-			}
-		}
+	if !token.Valid || claims.UserID == "" || claims.Role == "" {
+		return models.User{}, shared.ErrorInvalidToken
 	}
 
-	return models.User{}, shared.ErrorInvalidToken
+	parsedUserID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		return models.User{}, shared.ErrorInvalidToken
+	}
+
+	return models.User{Id: parsedUserID, Role: models.Role(claims.Role)}, nil
 }
 
 func jwtSecretKey() (string, error) {
