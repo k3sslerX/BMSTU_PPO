@@ -19,5 +19,8 @@ func (uc *UpdateUserRoleUseCase) Run(ctx context.Context, user models.User) (mod
 	if uc.User.Role != models.RoleAdmin {
 		return models.User{}, shared.ErrorPermissionDenied
 	}
+	if user.Id == uc.User.Id {
+		return models.User{}, shared.ErrorPermissionDenied
+	}
 	return uc.Repo.UpdateUserRole(ctx, user)
 }

@@ -3,6 +3,8 @@ package admin
 import (
 	"RacingGuru/internal/models"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Repo interface {
@@ -27,4 +29,10 @@ type Repo interface {
 	UpdateDriver(context.Context, models.Driver) (models.Driver, error)
 	UpdateCarParticipant(context.Context, models.CarParticipant) (models.CarParticipant, error)
 	UpdateUserRole(context.Context, models.User) (models.User, error)
+
+	DeleteDriver(context.Context, uuid.UUID) error
+	DeleteTeam(context.Context, uuid.UUID) error
+	DeleteTrack(context.Context, uuid.UUID) error
+	DeleteRace(context.Context, uuid.UUID) error
+	DeleteCarParticipant(context.Context, uuid.UUID) error
 }

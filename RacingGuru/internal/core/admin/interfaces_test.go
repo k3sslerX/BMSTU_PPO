@@ -130,3 +130,38 @@ func (repo *testRepo) UpdateUserRole(ctx context.Context, user models.User) (mod
 	}
 	return models.User{}, shared.ErrorNotFound
 }
+
+func (repo *testRepo) DeleteDriver(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.MustParse("11111111-1111-1111-1111-111111111111") {
+		return nil
+	}
+	return shared.ErrorNotFound
+}
+
+func (repo *testRepo) DeleteTeam(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.MustParse("22222222-2222-2222-2222-222222222222") {
+		return nil
+	}
+	return shared.ErrorNotFound
+}
+
+func (repo *testRepo) DeleteTrack(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.MustParse("44444444-4444-4444-4444-444444444444") {
+		return nil
+	}
+	return shared.ErrorNotFound
+}
+
+func (repo *testRepo) DeleteRace(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.MustParse("33333333-3333-3333-3333-333333333333") {
+		return nil
+	}
+	return shared.ErrorNotFound
+}
+
+func (repo *testRepo) DeleteCarParticipant(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.MustParse("66666666-6666-6666-6666-666666666666") {
+		return nil
+	}
+	return shared.ErrorNotFound
+}

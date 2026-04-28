@@ -270,6 +270,64 @@ func (r *Repository) ListUsers(ctx context.Context, query string) ([]models.User
 	return users, nil
 }
 
+func (r *Repository) DeleteDriver(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return shared.ErrorInvalidData
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	if err := deleteByColumn(ctx, tx, "favourite_drivers", "driver", id); err != nil {
+		return err
+	}
+	if err := deleteOneByID(ctx, tx, "driver", id); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) DeleteTeam(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return shared.ErrorInvalidData
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	if err := deleteByColumn(ctx, tx, "favourite_teams", "team", id); err != nil {
+		return err
+	}
+	if err := deleteOneByID(ctx, tx, "team", id); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *Repository) DeleteTrack(ctx context.Context, id uuid.UUID) error {
+	return r.deleteOneByID(ctx, "track", id)
+}
+
+func (r *Repository) DeleteRace(ctx context.Context, id uuid.UUID) error {
+	return r.deleteOneByID(ctx, "race", id)
+}
+
+func (r *Repository) DeleteCarParticipant(ctx context.Context, id uuid.UUID) error {
+	return r.deleteOneByID(ctx, "car_p", id)
+}
+
 func (r *Repository) CreateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
 	query, args, err := statementBuilder().
 		Insert("driver").
@@ -730,4 +788,61 @@ func replaceCarParticipantDrivers(
 	}
 
 	return nil
+}
+
+func (r *Repository) deleteOneByID(ctx context.Context, table string, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return shared.ErrorInvalidData
+	}
+
+	query, args, err := statementBuilder().
+		Delete(table).
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	res, err := r.Pool.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return shared.ErrorNotFound
+	}
+
+	return nil
+}
+
+func deleteOneByID(ctx context.Context, tx pgx.Tx, table string, id uuid.UUID) error {
+	query, args, err := statementBuilder().
+		Delete(table).
+		Where(sq.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	res, err := tx.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	if res.RowsAffected() == 0 {
+		return shared.ErrorNotFound
+	}
+
+	return nil
+}
+
+func deleteByColumn(ctx context.Context, tx pgx.Tx, table string, column string, id uuid.UUID) error {
+	query, args, err := statementBuilder().
+		Delete(table).
+		Where(sq.Eq{column: id}).
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, query, args...)
+	return err
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -43,6 +44,16 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func parseUUIDParam(h *Handler, w http.ResponseWriter, r *http.Request, name string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(chi.URLParam(r, name))
+	if err != nil {
+		h.sendLoggedError(w, r, "invalid data", "INVALID_DATA", http.StatusBadRequest, err)
+		return uuid.Nil, false
+	}
+
+	return id, true
 }
 
 // ListCars godoc
@@ -639,4 +650,159 @@ func (h *Handler) UpsertRaceResult(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, updated)
+}
+
+// DeleteDriver godoc
+// @Summary Delete driver
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Driver UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/drivers/{id} [delete]
+func (h *Handler) DeleteDriver(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteDriverUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteTeam godoc
+// @Summary Delete team
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Team UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/teams/{id} [delete]
+func (h *Handler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteTeamUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteTrack godoc
+// @Summary Delete track
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Track UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/tracks/{id} [delete]
+func (h *Handler) DeleteTrack(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteTrackUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteRace godoc
+// @Summary Delete race
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Race UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/races/{id} [delete]
+func (h *Handler) DeleteRace(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteRaceUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteCarParticipant godoc
+// @Summary Delete car participant
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Car participant UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/car-participants/{id} [delete]
+func (h *Handler) DeleteCarParticipant(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteCarParticipantUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
