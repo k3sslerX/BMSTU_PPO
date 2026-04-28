@@ -1,5 +1,24 @@
 basePath: /
 definitions:
+  handlers.AdminUserResponse:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 77777777-7777-7777-7777-777777777777
+        type: string
+      name:
+        example: Max Verstappen
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/models.Role'
+        enum:
+        - admin
+        - user
+        example: user
+    type: object
   handlers.AuthUserResponse:
     properties:
       email:
@@ -101,6 +120,15 @@ definitions:
       token:
         type: string
     type: object
+  models.Car:
+    properties:
+      id:
+        type: string
+      model:
+        type: string
+      year:
+        type: integer
+    type: object
   models.CarParticipant:
     properties:
       car_id:
@@ -115,6 +143,13 @@ definitions:
         type: string
       team_id:
         type: string
+    type: object
+  models.Championship:
+    properties:
+      id:
+        type: string
+      year:
+        type: integer
     type: object
   models.ConditionOperator:
     enum:
@@ -315,6 +350,41 @@ paths:
       tags:
       - system
   /admin/car-participants:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search by number
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.CarParticipant'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List car participants
+      tags:
+      - admin
     patch:
       consumes:
       - application/json
@@ -445,6 +515,78 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Update car participant drivers
+      tags:
+      - admin
+  /admin/cars:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search by model
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Car'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List cars
+      tags:
+      - admin
+  /admin/championships:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search by year
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Championship'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List championships
       tags:
       - admin
   /admin/drivers:
@@ -581,6 +723,41 @@ paths:
       tags:
       - admin
   /admin/races:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search by name
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Race'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List races
+      tags:
+      - admin
     patch:
       consumes:
       - application/json
@@ -755,6 +932,41 @@ paths:
       tags:
       - admin
   /admin/tracks:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search by name
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Track'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List tracks
+      tags:
+      - admin
     patch:
       consumes:
       - application/json
@@ -839,6 +1051,42 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Create track
+      tags:
+      - admin
+  /admin/users:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Search by name or email
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.AdminUserResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: List users
       tags:
       - admin
   /admin/users/role:
@@ -991,6 +1239,36 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: User login
+      tags:
+      - auth
+  /me:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthUserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Current user profile
       tags:
       - auth
   /register:

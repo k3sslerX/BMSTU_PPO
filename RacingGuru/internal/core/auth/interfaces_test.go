@@ -18,6 +18,13 @@ func (repo *testRepo) HasAdmin(ctx context.Context) (bool, error) {
 	return repo.hasAdmin, nil
 }
 
+func (repo *testRepo) GetUserByID(ctx context.Context, user models.User) (models.User, error) {
+	if user.Id == testUserID {
+		return models.User{Id: testUserID, Name: "testName", Email: "test@example.com", Role: models.RoleUser}, nil
+	}
+	return models.User{}, shared.ErrorNotFound
+}
+
 func (repo *testRepo) UserLogin(ctx context.Context, user models.User) (models.User, error) {
 	if user.Name == "testName" && user.Password == hashPassword("testPassword") {
 		return models.User{Id: testUserID, Name: "testName", Role: models.RoleUser}, nil

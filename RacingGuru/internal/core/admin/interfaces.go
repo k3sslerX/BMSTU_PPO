@@ -6,6 +6,13 @@ import (
 )
 
 type Repo interface {
+	ListCars(context.Context, string) ([]models.Car, error)
+	ListCarParticipants(context.Context, string) ([]models.CarParticipant, error)
+	ListChampionships(context.Context, string) ([]models.Championship, error)
+	ListRaces(context.Context, string) ([]models.Race, error)
+	ListTracks(context.Context, string) ([]models.Track, error)
+	ListUsers(context.Context, string) ([]models.User, error)
+
 	CreateDriver(context.Context, models.Driver) (models.Driver, error)
 	CreateTeam(context.Context, models.Team) (models.Team, error)
 	CreateTrack(context.Context, models.Track) (models.Track, error)

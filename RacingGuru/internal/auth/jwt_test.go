@@ -23,8 +23,8 @@ func TestParseTokenRejectsExpiredToken(t *testing.T) {
 	})
 
 	_, err := ParseToken(token)
-	if !errors.Is(err, shared.ErrorInvalidToken) {
-		t.Fatalf("ParseToken() error = %v, want %v", err, shared.ErrorInvalidToken)
+	if !errors.Is(err, shared.ErrorTokenExpired) {
+		t.Fatalf("ParseToken() error = %v, want %v", err, shared.ErrorTokenExpired)
 	}
 }
 

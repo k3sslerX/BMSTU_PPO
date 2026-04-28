@@ -3,6 +3,7 @@ package auth
 import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -61,6 +62,9 @@ func ParseToken(tokenString string) (models.User, error) {
 	}, jwt.WithExpirationRequired())
 
 	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return models.User{}, shared.ErrorTokenExpired
+		}
 		return models.User{}, shared.ErrorInvalidToken
 	}
 

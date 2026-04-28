@@ -117,6 +117,38 @@ func (r *Repository) UserChangePassword(ctx context.Context, user models.User, p
 	return nil
 }
 
+func (r *Repository) GetUserByID(ctx context.Context, user models.User) (models.User, error) {
+	var id, name, email, role string
+	query, args, err := statementBuilder().
+		Select("id", "name", "email", "role").
+		From("users").
+		Where(sq.Eq{"id": user.Id}).
+		ToSql()
+	if err != nil {
+		return models.User{}, err
+	}
+
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.User{}, shared.ErrorNotFound
+		}
+		return models.User{}, err
+	}
+
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return models.User{
+		Id:    userID,
+		Name:  name,
+		Email: email,
+		Role:  models.Role(role),
+	}, nil
+}
+
 func (r *Repository) UpdateUserRole(ctx context.Context, user models.User) (models.User, error) {
 	if user.Id == uuid.Nil || (user.Role != models.RoleAdmin && user.Role != models.RoleUser) {
 		return models.User{}, shared.ErrorInvalidData

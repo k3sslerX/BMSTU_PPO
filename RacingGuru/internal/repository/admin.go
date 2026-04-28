@@ -4,6 +4,7 @@ import (
 	"RacingGuru/internal/models"
 	"RacingGuru/internal/shared"
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -11,6 +12,263 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 )
+
+func (r *Repository) ListCars(ctx context.Context, query string) ([]models.Car, error) {
+	builder := statementBuilder().
+		Select("id", "model", "year_of_production").
+		From("car").
+		OrderBy("model ASC", "year_of_production DESC")
+
+	if query != "" {
+		builder = builder.Where(sq.ILike{"model": "%" + query + "%"})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	cars := make([]models.Car, 0)
+	for rows.Next() {
+		var car models.Car
+		if err := rows.Scan(&car.Id, &car.Model, &car.Year); err != nil {
+			return nil, err
+		}
+		cars = append(cars, car)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return cars, nil
+}
+
+func (r *Repository) ListCarParticipants(ctx context.Context, query string) ([]models.CarParticipant, error) {
+	builder := statementBuilder().
+		Select("id", "car::text", "team::text", "number").
+		From("car_p").
+		OrderBy("number ASC")
+
+	if query != "" {
+		builder = builder.Where(sq.ILike{"number": "%" + query + "%"})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	participants := make([]models.CarParticipant, 0)
+	for rows.Next() {
+		var participant models.CarParticipant
+		var carID sql.NullString
+		var teamID sql.NullString
+		if err := rows.Scan(&participant.Id, &carID, &teamID, &participant.Number); err != nil {
+			return nil, err
+		}
+		if carID.Valid {
+			parsedID, err := uuid.Parse(carID.String)
+			if err != nil {
+				return nil, err
+			}
+			participant.CarID = parsedID
+		}
+		if teamID.Valid {
+			parsedID, err := uuid.Parse(teamID.String)
+			if err != nil {
+				return nil, err
+			}
+			participant.TeamID = parsedID
+		}
+		participants = append(participants, participant)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return participants, nil
+}
+
+func (r *Repository) ListChampionships(ctx context.Context, query string) ([]models.Championship, error) {
+	builder := statementBuilder().
+		Select("id", "year").
+		From("championship").
+		OrderBy("year DESC")
+
+	if query != "" {
+		builder = builder.Where("year::text ILIKE ?", "%"+query+"%")
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	championships := make([]models.Championship, 0)
+	for rows.Next() {
+		var championship models.Championship
+		if err := rows.Scan(&championship.Id, &championship.Year); err != nil {
+			return nil, err
+		}
+		championships = append(championships, championship)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return championships, nil
+}
+
+func (r *Repository) ListRaces(ctx context.Context, query string) ([]models.Race, error) {
+	builder := statementBuilder().
+		Select("id", "name", "date", "type", "duration", "championship::text", "track::text").
+		From("race").
+		OrderBy("date DESC", "name ASC")
+
+	if query != "" {
+		builder = builder.Where(sq.ILike{"name": "%" + query + "%"})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	races := make([]models.Race, 0)
+	for rows.Next() {
+		var race models.Race
+		var championshipID sql.NullString
+		var trackID sql.NullString
+		if err := rows.Scan(&race.Id, &race.Name, &race.Date, &race.Type, &race.Duration, &championshipID, &trackID); err != nil {
+			return nil, err
+		}
+		if championshipID.Valid {
+			parsedID, err := uuid.Parse(championshipID.String)
+			if err != nil {
+				return nil, err
+			}
+			race.ChampionshipId = parsedID
+		}
+		if trackID.Valid {
+			parsedID, err := uuid.Parse(trackID.String)
+			if err != nil {
+				return nil, err
+			}
+			race.Track.Id = parsedID
+		}
+		races = append(races, race)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return races, nil
+}
+
+func (r *Repository) ListTracks(ctx context.Context, query string) ([]models.Track, error) {
+	builder := statementBuilder().
+		Select("id", "name", "country", "lap_length", "turns").
+		From("track").
+		OrderBy("name ASC")
+
+	if query != "" {
+		builder = builder.Where(sq.ILike{"name": "%" + query + "%"})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tracks := make([]models.Track, 0)
+	for rows.Next() {
+		var track models.Track
+		if err := rows.Scan(&track.Id, &track.Name, &track.Country, &track.Length, &track.Turns); err != nil {
+			return nil, err
+		}
+		tracks = append(tracks, track)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
+}
+
+func (r *Repository) ListUsers(ctx context.Context, query string) ([]models.User, error) {
+	builder := statementBuilder().
+		Select("id", "name", "email", "role").
+		From("users").
+		OrderBy("email ASC")
+
+	if query != "" {
+		builder = builder.Where(sq.Or{
+			sq.ILike{"name": "%" + query + "%"},
+			sq.ILike{"email": "%" + query + "%"},
+		})
+	}
+
+	sqlQuery, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]models.User, 0)
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.Id, &user.Name, &user.Email, &user.Role); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
 
 func (r *Repository) CreateDriver(ctx context.Context, driver models.Driver) (models.Driver, error) {
 	query, args, err := statementBuilder().

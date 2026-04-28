@@ -50,6 +50,7 @@ func (h *Handler) Routes() http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(h.authMiddleware)
+		r.Get("/me", h.Me)
 		r.Post("/change-password", h.ChangePassword)
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/favourites", h.ListFavourites)
@@ -61,6 +62,12 @@ func (h *Handler) Routes() http.Handler {
 			r.Get("/teams", h.SudokuTeams)
 		})
 		r.Route("/admin", func(r chi.Router) {
+			r.Get("/cars", h.ListCars)
+			r.Get("/car-participants", h.ListCarParticipants)
+			r.Get("/championships", h.ListChampionships)
+			r.Get("/races", h.ListRaces)
+			r.Get("/tracks", h.ListTracks)
+			r.Get("/users", h.ListUsers)
 			r.Post("/drivers", h.CreateDriver)
 			r.Patch("/drivers", h.UpdateDriver)
 			r.Patch("/users/role", h.UpdateUserRole)

@@ -3,7 +3,9 @@ package handlers
 import (
 	"RacingGuru/internal/auth"
 	"RacingGuru/internal/models"
+	"RacingGuru/internal/shared"
 	"context"
+	"errors"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -49,6 +51,10 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 				"reason", "invalid token",
 				"error", err,
 			)
+			if errors.Is(err, shared.ErrorTokenExpired) {
+				h.sendError(w, "token expired", "TOKEN_EXPIRED", http.StatusUnauthorized)
+				return
+			}
 			h.sendError(w, "unauthorized", "UNAUTHORIZED", http.StatusUnauthorized)
 			return
 		}
