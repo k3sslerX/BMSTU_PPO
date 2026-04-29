@@ -1,0 +1,106 @@
+<section class="page-shell page-shell--wide stack">
+  <div class="section-heading">
+    <span class="eyebrow">Auth</span>
+    <h1>Авторизация</h1>
+  </div>
+
+  <div class="two-column-grid">
+    <form class="panel stack" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+      <div class="section-heading">
+        <span class="eyebrow">Login</span>
+        <h2>Войти</h2>
+      </div>
+
+      <label class="field">
+        <span>Email</span>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="user@example.com"
+          autocomplete="email"
+          [attr.aria-invalid]="loginForm.controls.email.invalid && loginForm.controls.email.touched"
+        />
+        @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
+          <small class="field-error">Введите корректный email.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="secret123"
+          autocomplete="current-password"
+          [attr.aria-invalid]="loginForm.controls.password.invalid && loginForm.controls.password.touched"
+        />
+        @if (loginForm.controls.password.invalid && loginForm.controls.password.touched) {
+          <small class="field-error">Введите пароль.</small>
+        }
+      </label>
+
+      <button class="button" type="submit" [disabled]="loginBusy()">
+        {{ loginBusy() ? 'Входим...' : 'Войти' }}
+      </button>
+
+      @if (loginFeedback(); as item) {
+        <div class="flash" [class.flash-success]="item.kind === 'success'" [class.flash-error]="item.kind === 'error'" aria-live="polite">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.text }}</p>
+        </div>
+      }
+    </form>
+
+    <form class="panel stack" [formGroup]="registerForm" (ngSubmit)="submitRegister()">
+      <div class="section-heading">
+        <span class="eyebrow">Register</span>
+        <h2>Зарегистрироваться</h2>
+      </div>
+
+      <label class="field">
+        <span>Name</span>
+        <input type="text" formControlName="name" placeholder="Max Verstappen" />
+      </label>
+
+      <label class="field">
+        <span>Email</span>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="user@example.com"
+          autocomplete="email"
+          [attr.aria-invalid]="registerForm.controls.email.invalid && registerForm.controls.email.touched"
+        />
+        @if (registerForm.controls.email.invalid && registerForm.controls.email.touched) {
+          <small class="field-error">Введите корректный email.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Password</span>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="secret123"
+          autocomplete="new-password"
+          [attr.aria-invalid]="registerForm.controls.password.invalid && registerForm.controls.password.touched"
+        />
+        @if (registerForm.controls.password.invalid && registerForm.controls.password.touched) {
+          <small class="field-error">Минимум 3 символа.</small>
+        }
+      </label>
+
+      <button class="button" type="submit" [disabled]="registerBusy()">
+        {{ registerBusy() ? 'Создаём...' : 'Зарегистрировать' }}
+      </button>
+
+      @if (registerFeedback(); as item) {
+        <div class="flash" [class.flash-success]="item.kind === 'success'" [class.flash-error]="item.kind === 'error'" aria-live="polite">
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.text }}</p>
+        </div>
+      }
+
+    </form>
+  </div>
+</section>

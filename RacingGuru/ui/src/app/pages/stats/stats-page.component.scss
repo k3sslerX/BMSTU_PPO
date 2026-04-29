@@ -1,0 +1,259 @@
+.stats-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.stats-tabs {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 0.45rem;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(12, 13, 16, 0.72);
+}
+
+.stats-tabs a {
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: 180ms ease;
+}
+
+.stats-tabs a:hover,
+.stats-tabs a.is-active {
+  background: rgba(229, 9, 20, 0.16);
+  color: var(--brand-strong);
+}
+
+.selector-panel {
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.65fr) minmax(18rem, 1fr);
+  align-items: end;
+  gap: 1.25rem;
+  overflow: visible;
+}
+
+.selector-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.9rem;
+}
+
+.hint {
+  margin: 0;
+  color: var(--muted);
+}
+
+.combo-field {
+  position: relative;
+}
+
+.combo-control {
+  display: block;
+}
+
+.selected-entity {
+  color: var(--muted);
+}
+
+.selected-entity {
+  overflow-wrap: anywhere;
+}
+
+.toast-layer {
+  position: fixed;
+  z-index: 80;
+  top: 7rem;
+  left: 50%;
+  width: min(34rem, calc(100vw - 2rem));
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: toast-in 180ms ease both;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.comparison-card {
+  padding: 1rem;
+}
+
+.identity-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgba(34, 36, 43, 0.86), rgba(12, 13, 16, 0.78)),
+    radial-gradient(circle at top right, rgba(229, 9, 20, 0.13), transparent 42%);
+  border: 1px solid var(--line);
+}
+
+.identity-card div,
+.identity-card strong,
+.identity-card span,
+.identity-card small {
+  display: block;
+}
+
+.identity-card div {
+  min-width: 0;
+}
+
+.identity-card strong {
+  font-size: 1.05rem;
+}
+
+.identity-card span,
+.identity-card small {
+  margin-top: 0.3rem;
+  color: var(--muted);
+}
+
+.identity-card small {
+  overflow-wrap: anywhere;
+}
+
+.identity-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.heart-button,
+.remove-button {
+  border: 1px solid rgba(170, 64, 44, 0.16);
+  border-radius: 999px;
+  background: rgba(170, 64, 44, 0.08);
+  color: var(--danger);
+  padding: 0.45rem 0.8rem;
+}
+
+.heart-button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(12, 13, 16, 0.82);
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 1.05rem;
+  transition: 180ms ease;
+}
+
+.heart-button:hover,
+.heart-button:focus,
+.heart-button.is-favourite {
+  border-color: rgba(229, 9, 20, 0.34);
+  background: rgba(229, 9, 20, 0.14);
+  color: var(--brand);
+  transform: translateY(-1px);
+}
+
+.heart-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+  transform: none;
+}
+
+.comparison-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.metric-card {
+  min-height: 7.1rem;
+}
+
+.metric-card.is-best {
+  border-color: rgba(61, 220, 132, 0.36);
+  background: rgba(61, 220, 132, 0.14);
+  transform: translateY(-1px);
+}
+
+.metric-card.is-tied-best {
+  border-color: rgba(239, 176, 54, 0.42);
+  background: rgba(239, 176, 54, 0.16);
+  transform: translateY(-1px);
+}
+
+.metric-card small {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--success);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.metric-card.is-tied-best small {
+  color: var(--accent);
+}
+
+.empty-state {
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (max-width: 980px) {
+  .stats-page-head,
+  .selector-panel,
+  .selector-form {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-page-head {
+    flex-direction: column;
+  }
+
+  .stats-tabs,
+  .selector-form .button {
+    width: 100%;
+  }
+
+  .stats-tabs a {
+    flex: 1;
+    text-align: center;
+  }
+
+  .comparison-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

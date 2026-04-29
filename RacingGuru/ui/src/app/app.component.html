@@ -1,0 +1,47 @@
+<div class="app-shell">
+  <header class="topbar page-shell">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark">RG</span>
+      <span>
+        <strong>RacingGuru</strong>
+        <small>Ultimate stats collector</small>
+      </span>
+    </a>
+
+    <nav class="nav">
+      <a routerLink="/stats" routerLinkActive="is-active">Stats</a>
+      <a routerLink="/sudoku" routerLinkActive="is-active">Sudoku</a>
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/account" routerLinkActive="is-active">Account</a>
+      }
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin" routerLinkActive="is-active">Admin</a>
+      }
+    </nav>
+
+    <div class="session-box">
+      @if (auth.isLoggedIn()) {
+        <div class="session-meta">
+          <span class="session-pill">{{ auth.displayName() }}</span>
+          @if (auth.isAdmin()) {
+            <small>Админ</small>
+          }
+        </div>
+        <button class="button ghost-button" type="button" (click)="logout()">Logout</button>
+      } @else {
+        <a class="button ghost-button" routerLink="/auth">Вход</a>
+      }
+    </div>
+  </header>
+
+  <main class="content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer page-shell">
+    <div>
+      <p>I don't collect any data, because I don't know how.</p>
+    </div>
+    <small>k3sslerX • {{ year }}</small>
+  </footer>
+</div>

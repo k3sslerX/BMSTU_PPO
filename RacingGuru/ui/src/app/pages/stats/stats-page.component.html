@@ -1,0 +1,119 @@
+<section class="page-shell page-shell--wide stack">
+  <div class="stats-page-head">
+        <div class="section-heading">
+          <span class="eyebrow">Stats / Drivers</span>
+          <h1>Статистика пилотов.</h1>
+          <p class="lead">
+            Добавьте пилотов в сравнение: ручной ввод показывает совпадения, а лучшие показатели между выбранными пилотами
+            подсветятся зелёным, равные значения — жёлтым.
+          </p>
+        </div>
+
+    <nav class="stats-tabs" aria-label="Страницы статистики">
+      <a routerLink="/stats/drivers" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Пилоты</a>
+      <a routerLink="/stats/teams" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Команды</a>
+    </nav>
+  </div>
+
+  @if (listFeedback(); as item) {
+    <div class="flash flash-error">
+      <strong>Не удалось загрузить список пилотов</strong>
+      <p>{{ item.text }}</p>
+    </div>
+  }
+
+  <section class="panel glass-panel selector-panel">
+    <div class="section-heading">
+      <span class="eyebrow">Compare</span>
+      <h2>Добавить пилота</h2>
+      <p class="hint">В сравнении сейчас {{ comparison().length }} из {{ maxComparisonItems }}.</p>
+    </div>
+
+    <form class="selector-form" [formGroup]="driverForm" (ngSubmit)="addDriverStats()">
+      <div class="field combo-field">
+        <span>Пилот</span>
+        <div class="combo-control">
+          <input
+            #driverInput
+            type="text"
+            formControlName="driverQuery"
+            placeholder="Начните вводить имя, страну или UUID"
+            autocomplete="off"
+            (focus)="openDropdown(driverInput)"
+            (input)="syncDriverInput($any($event.target).value, driverInput)"
+          />
+        </div>
+
+        @if (selectedDriver(); as driver) {
+          <small class="selected-entity">Выбран: {{ driver.name }} · {{ driver.id }}</small>
+        }
+      </div>
+
+      <button class="button" type="submit" [disabled]="statsBusy() || comparison().length >= maxComparisonItems">
+        {{ statsBusy() ? 'Добавляем...' : 'Добавить в сравнение' }}
+      </button>
+    </form>
+  </section>
+
+  @if (feedback(); as item) {
+    <div class="toast-layer" aria-live="polite">
+      <div class="flash" [class.flash-error]="item.kind === 'error'" [class.flash-success]="item.kind === 'info'">
+        <strong>{{ item.kind === 'error' ? 'Не получилось' : 'Готово' }}</strong>
+        <p>{{ item.text }}</p>
+      </div>
+    </div>
+  }
+
+  @if (comparison().length) {
+    <section class="comparison-grid" aria-label="Сравнение пилотов">
+      @for (result of comparison(); track result.driver.id) {
+        <article class="comparison-card panel">
+          <div class="identity-card">
+            <div>
+              <strong>{{ result.driver.name }}</strong>
+              <span>{{ result.driver.nationality }} • {{ result.driver.birthday }}</span>
+              <small>{{ result.driver.id }}</small>
+            </div>
+            <div class="identity-actions">
+              <button
+                class="heart-button"
+                type="button"
+                [class.is-favourite]="isDriverFavourite(result.driver.id)"
+                [disabled]="favouriteBusyId() === result.driver.id"
+                [attr.aria-label]="isDriverFavourite(result.driver.id) ? 'Удалить пилота из избранного' : 'Добавить пилота в избранное'"
+                (click)="toggleDriverFavourite(result)"
+              >
+                ♥
+              </button>
+              <button class="remove-button" type="button" (click)="removeDriverStats(result.driver.id)">Убрать</button>
+            </div>
+          </div>
+
+          <div class="metric-grid comparison-metrics">
+            @for (metric of metricDefinitions; track metric.key) {
+              <article
+                class="metric-card"
+                [class.is-best]="metricHighlight(result.stats, metric) === 'best'"
+                [class.is-tied-best]="metricHighlight(result.stats, metric) === 'tied'"
+              >
+                <span>{{ metric.label }}</span>
+                <strong>{{ metricValue(result.stats, metric) }}</strong>
+                @if (metricHighlight(result.stats, metric) === 'best') {
+                  <small>Лучший показатель</small>
+                } @else if (metricHighlight(result.stats, metric) === 'tied') {
+                  <small>Лучший показатель: ничья</small>
+                }
+              </article>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  } @else {
+    <section class="panel empty-state">
+      <span class="eyebrow">Empty grid</span>
+      <h2>Выберите первого пилота.</h2>
+      <p>После добавления второго пилота карточки начнут подсвечивать лучших по каждому показателю.</p>
+    </section>
+  }
+</section>

@@ -1,0 +1,435 @@
+<section class="page-shell page-shell--wide stack">
+  <div class="section-heading">
+    <span class="eyebrow">Admin</span>
+    <h1>Панель управления</h1>
+  </div>
+
+  <button class="secondary-button reference-refresh" type="button" (click)="loadReferences()" [disabled]="referencesBusy()">
+    {{ referencesBusy() ? 'Обновляем списки...' : 'Обновить списки' }}
+  </button>
+
+  @if (feedback(); as item) {
+    <div class="flash" [class.flash-success]="item.kind === 'success'" [class.flash-error]="item.kind === 'error'">
+      <strong>{{ item.title }}</strong>
+      <p>{{ item.text }}</p>
+    </div>
+  }
+
+  <div class="admin-grid">
+    <form class="panel stack" [formGroup]="driverForm">
+      <div class="section-heading">
+        <span class="eyebrow">Drivers</span>
+        <h2>Create / update driver</h2>
+      </div>
+
+      <div class="form-grid">
+        <app-admin-lookup-combo
+          formControlName="id"
+          label="Driver for update"
+          placeholder="Начните вводить имя, страну или UUID"
+          loadingText="Загружаем пилотов..."
+          selectedPrefix="Выбран"
+          [loading]="referencesBusy()"
+          [options]="driverOptions()"
+        ></app-admin-lookup-combo>
+        <label class="field">
+          <span>Name</span>
+          <input type="text" formControlName="name" />
+        </label>
+        <label class="field">
+          <span>Nationality</span>
+          <input type="text" formControlName="nationality" />
+        </label>
+        <label class="field">
+          <span>Birthday</span>
+          <input type="text" formControlName="birthday" placeholder="2001-09-30" />
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button
+          type="button"
+          [class.button]="!driverSelected()"
+          [class.secondary-button]="driverSelected()"
+          (click)="submitDriver('create')"
+          [disabled]="busyAction() === 'driver-create' || driverSelected()"
+        >
+          Create driver
+        </button>
+        <button
+          type="button"
+          [class.button]="driverSelected()"
+          [class.secondary-button]="!driverSelected()"
+          (click)="submitDriver('update')"
+          [disabled]="busyAction() === 'driver-update' || !driverSelected()"
+        >
+          Update driver
+        </button>
+        <button class="danger-button" type="button" (click)="deleteDriver()" [disabled]="busyAction() === 'driver-delete' || !driverSelected()">
+          Delete driver
+        </button>
+      </div>
+    </form>
+
+    <form class="panel stack" [formGroup]="teamForm">
+      <div class="section-heading">
+        <span class="eyebrow">Teams</span>
+        <h2>Create / update team</h2>
+      </div>
+
+      <div class="form-grid">
+        <app-admin-lookup-combo
+          formControlName="id"
+          label="Team for update"
+          placeholder="Начните вводить команду, страну или UUID"
+          loadingText="Загружаем команды..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="teamOptions()"
+        ></app-admin-lookup-combo>
+        <label class="field">
+          <span>Name</span>
+          <input type="text" formControlName="name" />
+        </label>
+        <label class="field">
+          <span>Country</span>
+          <input type="text" formControlName="country" />
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button
+          type="button"
+          [class.button]="!teamSelected()"
+          [class.secondary-button]="teamSelected()"
+          (click)="submitTeam('create')"
+          [disabled]="busyAction() === 'team-create' || teamSelected()"
+        >
+          Create team
+        </button>
+        <button
+          type="button"
+          [class.button]="teamSelected()"
+          [class.secondary-button]="!teamSelected()"
+          (click)="submitTeam('update')"
+          [disabled]="busyAction() === 'team-update' || !teamSelected()"
+        >
+          Update team
+        </button>
+        <button class="danger-button" type="button" (click)="deleteTeam()" [disabled]="busyAction() === 'team-delete' || !teamSelected()">
+          Delete team
+        </button>
+      </div>
+    </form>
+
+    <form class="panel stack" [formGroup]="trackForm">
+      <div class="section-heading">
+        <span class="eyebrow">Tracks</span>
+        <h2>Create / update track</h2>
+      </div>
+
+      <div class="form-grid">
+        <app-admin-lookup-combo
+          formControlName="id"
+          label="Track for update"
+          placeholder="Начните вводить трассу, страну или UUID"
+          loadingText="Загружаем трассы..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="trackOptions()"
+        ></app-admin-lookup-combo>
+        <label class="field">
+          <span>Name</span>
+          <input type="text" formControlName="name" />
+        </label>
+        <label class="field">
+          <span>Country</span>
+          <input type="text" formControlName="country" />
+        </label>
+        <label class="field">
+          <span>Lap length</span>
+          <input type="number" formControlName="length" />
+        </label>
+        <label class="field">
+          <span>Turns</span>
+          <input type="number" formControlName="turns" />
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button
+          type="button"
+          [class.button]="!trackSelected()"
+          [class.secondary-button]="trackSelected()"
+          (click)="submitTrack('create')"
+          [disabled]="busyAction() === 'track-create' || trackSelected()"
+        >
+          Create track
+        </button>
+        <button
+          type="button"
+          [class.button]="trackSelected()"
+          [class.secondary-button]="!trackSelected()"
+          (click)="submitTrack('update')"
+          [disabled]="busyAction() === 'track-update' || !trackSelected()"
+        >
+          Update track
+        </button>
+        <button class="danger-button" type="button" (click)="deleteTrack()" [disabled]="busyAction() === 'track-delete' || !trackSelected()">
+          Delete track
+        </button>
+      </div>
+    </form>
+
+    <form class="panel stack" [formGroup]="raceForm">
+      <div class="section-heading">
+        <span class="eyebrow">Races</span>
+        <h2>Create / update race</h2>
+      </div>
+
+      <div class="form-grid">
+        <app-admin-lookup-combo
+          formControlName="id"
+          label="Race for update"
+          placeholder="Начните вводить гонку, дату или UUID"
+          loadingText="Загружаем гонки..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="raceOptions()"
+        ></app-admin-lookup-combo>
+        <label class="field">
+          <span>Name</span>
+          <input type="text" formControlName="name" />
+        </label>
+        <label class="field">
+          <span>Date</span>
+          <input type="date" formControlName="date" />
+        </label>
+        <label class="field">
+          <span>Type</span>
+          <input type="number" formControlName="type" />
+        </label>
+        <label class="field">
+          <span>Duration</span>
+          <input type="number" formControlName="duration" />
+        </label>
+        <app-admin-lookup-combo
+          formControlName="trackId"
+          label="Track"
+          placeholder="Начните вводить трассу, страну или UUID"
+          loadingText="Загружаем трассы..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="trackOptions()"
+        ></app-admin-lookup-combo>
+        <app-admin-lookup-combo
+          formControlName="championshipId"
+          label="Championship"
+          placeholder="Начните вводить сезон, чемпионат или UUID"
+          loadingText="Загружаем чемпионаты..."
+          selectedPrefix="Выбран"
+          [loading]="referencesBusy()"
+          [options]="championshipOptions()"
+        ></app-admin-lookup-combo>
+      </div>
+
+      <div class="button-row">
+        <button
+          type="button"
+          [class.button]="!raceSelected()"
+          [class.secondary-button]="raceSelected()"
+          (click)="submitRace('create')"
+          [disabled]="busyAction() === 'race-create' || raceSelected()"
+        >
+          Create race
+        </button>
+        <button
+          type="button"
+          [class.button]="raceSelected()"
+          [class.secondary-button]="!raceSelected()"
+          (click)="submitRace('update')"
+          [disabled]="busyAction() === 'race-update' || !raceSelected()"
+        >
+          Update race
+        </button>
+        <button class="danger-button" type="button" (click)="deleteRace()" [disabled]="busyAction() === 'race-delete' || !raceSelected()">
+          Delete race
+        </button>
+      </div>
+    </form>
+
+    <form class="panel stack" [formGroup]="carParticipantForm">
+      <div class="section-heading">
+        <span class="eyebrow">Car participants</span>
+        <h2>Car / team / drivers</h2>
+      </div>
+
+      <div class="form-grid">
+        <app-admin-lookup-combo
+          formControlName="id"
+          label="Participant for update"
+          placeholder="Начните вводить номер, команду, машину или UUID"
+          loadingText="Загружаем участников..."
+          selectedPrefix="Выбран"
+          [loading]="referencesBusy()"
+          [options]="carParticipantOptions()"
+        ></app-admin-lookup-combo>
+        <app-admin-lookup-combo
+          formControlName="carId"
+          label="Car"
+          placeholder="Начните вводить модель, год, класс или UUID"
+          loadingText="Загружаем машины..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="carOptions()"
+        ></app-admin-lookup-combo>
+        <app-admin-lookup-combo
+          formControlName="teamId"
+          label="Team"
+          placeholder="Начните вводить команду, страну или UUID"
+          loadingText="Загружаем команды..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="teamOptions()"
+        ></app-admin-lookup-combo>
+        <label class="field">
+          <span>Number</span>
+          <input type="text" formControlName="number" />
+        </label>
+        <app-admin-lookup-combo
+          class="field-wide"
+          formControlName="driverIds"
+          label="Drivers"
+          placeholder="Начните вводить пилота, страну или UUID"
+          loadingText="Загружаем пилотов..."
+          selectedPrefix="Выбраны"
+          [loading]="referencesBusy()"
+          [multiple]="true"
+          [closeOnSelect]="true"
+          [options]="driverOptions()"
+        ></app-admin-lookup-combo>
+      </div>
+
+      <div class="button-row wrap-row">
+        <button
+          type="button"
+          [class.button]="!carParticipantSelected()"
+          [class.secondary-button]="carParticipantSelected()"
+          (click)="submitCarParticipant('create')"
+          [disabled]="busyAction() === 'car-participant-create' || carParticipantSelected()"
+        >
+          Create participant
+        </button>
+        <button
+          type="button"
+          [class.button]="carParticipantSelected()"
+          [class.secondary-button]="!carParticipantSelected()"
+          (click)="submitCarParticipant('update')"
+          [disabled]="busyAction() === 'car-participant-update' || !carParticipantSelected()"
+        >
+          Update participant
+        </button>
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="submitCarParticipant('drivers')"
+          [disabled]="busyAction() === 'car-participant-drivers' || !carParticipantSelected()"
+        >
+          Replace drivers
+        </button>
+        <button
+          class="danger-button"
+          type="button"
+          (click)="deleteCarParticipant()"
+          [disabled]="busyAction() === 'car-participant-delete' || !carParticipantSelected()"
+        >
+          Delete participant
+        </button>
+      </div>
+    </form>
+
+    <form class="panel stack" [formGroup]="raceResultForm">
+      <div class="section-heading">
+        <span class="eyebrow">Results</span>
+        <h2>Upsert race result</h2>
+      </div>
+
+      <div class="form-grid">
+        <app-admin-lookup-combo
+          formControlName="raceId"
+          label="Race"
+          placeholder="Начните вводить гонку, дату или UUID"
+          loadingText="Загружаем гонки..."
+          selectedPrefix="Выбрана"
+          [loading]="referencesBusy()"
+          [options]="raceOptions()"
+        ></app-admin-lookup-combo>
+        <app-admin-lookup-combo
+          formControlName="carParticipantId"
+          label="Car participant"
+          placeholder="Начните вводить номер, команду, машину или UUID"
+          loadingText="Загружаем участников..."
+          selectedPrefix="Выбран"
+          [loading]="referencesBusy()"
+          [options]="carParticipantOptions()"
+        ></app-admin-lookup-combo>
+        <label class="field">
+          <span>Finish position</span>
+          <input type="number" formControlName="finishPos" />
+        </label>
+        <label class="field">
+          <span>Qualifying position</span>
+          <input type="number" formControlName="qualifyingPos" />
+        </label>
+      </div>
+
+      <button class="button" type="button" (click)="submitRaceResult()" [disabled]="busyAction() === 'race-result'">
+        Upsert result
+      </button>
+    </form>
+
+    <form class="panel stack" [formGroup]="userRoleForm">
+      <div class="section-heading">
+        <span class="eyebrow">Users</span>
+        <h2>Update user role</h2>
+      </div>
+
+      <div class="form-grid user-role-grid">
+        <app-admin-lookup-combo
+          formControlName="id"
+          label="User"
+          placeholder="Начните вводить email, имя или UUID"
+          loadingText="Загружаем пользователей..."
+          selectedPrefix="Выбран"
+          [loading]="referencesBusy()"
+          [options]="userOptions()"
+        ></app-admin-lookup-combo>
+        <app-admin-lookup-combo
+          formControlName="role"
+          label="Role"
+          placeholder="Начните вводить роль"
+          loadingText="Загружаем роли..."
+          selectedPrefix="Выбрана"
+          [options]="roleLookupOptions"
+        ></app-admin-lookup-combo>
+      </div>
+
+      <button class="button secondary-button user-role-button" type="button" (click)="submitUserRole()" [disabled]="busyAction() === 'user-role'">
+        Update role
+      </button>
+    </form>
+  </div>
+
+  <section class="panel stack">
+    <div class="section-heading">
+      <span class="eyebrow">Last response</span>
+      <h2>Последний успешный ответ сервера</h2>
+    </div>
+
+    @if (lastResponse()) {
+      <pre class="code-block">{{ lastResponse() | json }}</pre>
+    } @else {
+      <p class="subtle-text">После первого успешного admin-запроса здесь появится JSON-ответ.</p>
+    }
+  </section>
+</section>
