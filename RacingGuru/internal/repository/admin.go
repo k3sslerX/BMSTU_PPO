@@ -5,6 +5,7 @@ import (
 	"RacingGuru/internal/shared"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -15,12 +16,17 @@ import (
 
 func (r *Repository) ListCars(ctx context.Context, query string) ([]models.Car, error) {
 	builder := statementBuilder().
-		Select("id", "model", "year_of_production").
-		From("car").
-		OrderBy("model ASC", "year_of_production DESC")
+		Select("c.id", "c.model", "c.year_of_production", "COALESCE(rc.name, '')").
+		From("car c").
+		LeftJoin("raceclass rc ON rc.id = c.raceclass").
+		OrderBy("c.model ASC", "c.year_of_production DESC")
 
 	if query != "" {
-		builder = builder.Where(sq.ILike{"model": "%" + query + "%"})
+		builder = builder.Where(sq.Or{
+			sq.ILike{"c.model": "%" + query + "%"},
+			sq.ILike{"rc.name": "%" + query + "%"},
+			sq.Expr("c.year_of_production::text ILIKE ?", "%"+query+"%"),
+		})
 	}
 
 	sqlQuery, args, err := builder.ToSql()
@@ -37,7 +43,7 @@ func (r *Repository) ListCars(ctx context.Context, query string) ([]models.Car, 
 	cars := make([]models.Car, 0)
 	for rows.Next() {
 		var car models.Car
-		if err := rows.Scan(&car.Id, &car.Model, &car.Year); err != nil {
+		if err := rows.Scan(&car.Id, &car.Model, &car.Year, &car.RaceClass); err != nil {
 			return nil, err
 		}
 		cars = append(cars, car)
@@ -52,12 +58,21 @@ func (r *Repository) ListCars(ctx context.Context, query string) ([]models.Car, 
 
 func (r *Repository) ListCarParticipants(ctx context.Context, query string) ([]models.CarParticipant, error) {
 	builder := statementBuilder().
-		Select("id", "car::text", "team::text", "number").
-		From("car_p").
-		OrderBy("number ASC")
+		Select(
+			"cp.id",
+			"cp.car::text",
+			"cp.team::text",
+			"cp.number",
+			"COALESCE(json_agg(json_build_object('id', d.id, 'name', d.name) ORDER BY d.name) FILTER (WHERE d.id IS NOT NULL), '[]')::text",
+		).
+		From("car_p cp").
+		LeftJoin("team_p tp ON tp.car_p = cp.id").
+		LeftJoin("driver d ON d.id = tp.driver").
+		GroupBy("cp.id", "cp.car", "cp.team", "cp.number").
+		OrderBy("cp.number ASC")
 
 	if query != "" {
-		builder = builder.Where(sq.ILike{"number": "%" + query + "%"})
+		builder = builder.Where(sq.ILike{"cp.number": "%" + query + "%"})
 	}
 
 	sqlQuery, args, err := builder.ToSql()
@@ -76,7 +91,11 @@ func (r *Repository) ListCarParticipants(ctx context.Context, query string) ([]m
 		var participant models.CarParticipant
 		var carID sql.NullString
 		var teamID sql.NullString
-		if err := rows.Scan(&participant.Id, &carID, &teamID, &participant.Number); err != nil {
+		var driversJSON string
+		if err := rows.Scan(&participant.Id, &carID, &teamID, &participant.Number, &driversJSON); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(driversJSON), &participant.Drivers); err != nil {
 			return nil, err
 		}
 		if carID.Valid {
@@ -105,12 +124,16 @@ func (r *Repository) ListCarParticipants(ctx context.Context, query string) ([]m
 
 func (r *Repository) ListChampionships(ctx context.Context, query string) ([]models.Championship, error) {
 	builder := statementBuilder().
-		Select("id", "year").
-		From("championship").
-		OrderBy("year DESC")
+		Select("c.id", "c.year", "COALESCE(o.name, '')").
+		From("championship c").
+		LeftJoin("organizer o ON o.id = c.organizer").
+		OrderBy("c.year DESC")
 
 	if query != "" {
-		builder = builder.Where("year::text ILIKE ?", "%"+query+"%")
+		builder = builder.Where(sq.Or{
+			sq.Expr("c.year::text ILIKE ?", "%"+query+"%"),
+			sq.ILike{"o.name": "%" + query + "%"},
+		})
 	}
 
 	sqlQuery, args, err := builder.ToSql()
@@ -127,7 +150,7 @@ func (r *Repository) ListChampionships(ctx context.Context, query string) ([]mod
 	championships := make([]models.Championship, 0)
 	for rows.Next() {
 		var championship models.Championship
-		if err := rows.Scan(&championship.Id, &championship.Year); err != nil {
+		if err := rows.Scan(&championship.Id, &championship.Year, &championship.Organizer); err != nil {
 			return nil, err
 		}
 		championships = append(championships, championship)
