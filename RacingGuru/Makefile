@@ -23,7 +23,7 @@ clean-swagger:
 	rm -f $(SWAGGER_OUT) $(SWAGGER_JSON)
 
 docker-build-app:
-	docker compose build app
+	cd .. && docker compose build app
 
 docker-recreate-app:
-	docker compose up -d --no-deps --force-recreate app
+	cd .. && docker compose up -d --no-deps --force-recreate app

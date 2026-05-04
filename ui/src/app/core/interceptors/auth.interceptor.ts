@@ -39,12 +39,25 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 };
 
 function requiresAuth(url: string): boolean {
-  const path = url.replace(/^https?:\/\/[^/]+/, '');
+  const path = requestPath(url);
+  const apiPath = path.startsWith('/api/') ? path.slice(4) : path;
 
   return (
     path.startsWith('/api/admin') ||
     path.startsWith('/api/sudoku') ||
     path.startsWith('/api/users') ||
-    path === '/api/change-password'
+    path === '/api/change-password' ||
+    apiPath.startsWith('/admin') ||
+    apiPath.startsWith('/sudoku') ||
+    apiPath.startsWith('/users') ||
+    apiPath === '/change-password'
   );
+}
+
+function requestPath(url: string): string {
+  try {
+    return new URL(url, window.location.origin).pathname;
+  } catch {
+    return url.replace(/^https?:\/\/[^/]+/, '').split('?')[0];
+  }
 }

@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiErrorEnvelope } from '../models/api.models';
+import { getRuntimeConfig } from '../config/runtime-config';
 
 export const tokenExpiredMessage = 'Сессия истекла. Войдите заново, чтобы продолжить.';
 
@@ -19,11 +20,11 @@ export function readApiError(error: unknown): string {
     }
 
     if (error.status === 0) {
-      return 'API недоступно. Проверьте, что Go-сервер запущен на 8080 порту.';
+      return `API недоступно. Проверьте адрес ${getRuntimeConfig().apiBaseUrl}.`;
     }
 
     if (error.status >= 500 && (rawError.includes('proxy') || rawError.includes('ECONNREFUSED'))) {
-      return 'Backend не отвечает. Запустите Go-сервер на http://localhost:8080 и повторите вход.';
+      return `Backend не отвечает по адресу ${getRuntimeConfig().apiBaseUrl}.`;
     }
 
     return `Запрос завершился с ошибкой ${error.status}.`;

@@ -19,11 +19,12 @@ import {
   TokenResponse,
   Track
 } from '../models/api.models';
+import { getRuntimeConfig } from '../config/runtime-config';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api';
+  private readonly baseUrl = getRuntimeConfig().apiBaseUrl;
 
   health(): Observable<void> {
     return this.http.get<void>(this.url('/'));
