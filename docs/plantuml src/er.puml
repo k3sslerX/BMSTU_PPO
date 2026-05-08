@@ -1,0 +1,148 @@
+@startuml
+title RacingGuru - актуальная модель домена
+top to bottom direction
+skinparam classAttributeIconSize 0
+
+package "internal/models" {
+  enum Role {
+    admin
+    user
+  }
+
+  enum ConditionOperator {
+    gt
+    lt
+    gte
+    lte
+    eq
+  }
+
+  class User {
+    +Id: uuid.UUID
+    +Name: string
+    +Email: string
+    +Password: string
+    +Role: Role
+    +FavouriteDrivers: []Driver
+    +FavouriteTeams: []Team
+  }
+
+  class Driver {
+    +Id: uuid.UUID
+    +Name: string
+    +Birthday: string
+    +Nationality: string
+  }
+
+  class Team {
+    +Id: uuid.UUID
+    +Name: string
+    +Country: string
+  }
+
+  class Car {
+    +Id: uuid.UUID
+    +Model: string
+    +Year: int
+    +RaceClass: string
+  }
+
+  class CarParticipant {
+    +Id: uuid.UUID
+    +CarID: uuid.UUID
+    +TeamID: uuid.UUID
+    +Number: string
+    +Drivers: []Driver
+  }
+
+  class Championship {
+    +Id: uuid.UUID
+    +Year: int
+    +Organizer: string
+  }
+
+  class Track {
+    +Id: uuid.UUID
+    +Name: string
+    +Country: string
+    +Length: int
+    +Turns: int
+  }
+
+  class Race {
+    +Id: uuid.UUID
+    +Name: string
+    +Date: time.Time
+    +Type: int
+    +Duration: int
+    +Track: Track
+    +ChampionshipId: uuid.UUID
+  }
+
+  class RaceResult {
+    +RaceID: uuid.UUID
+    +CarParticipantID: uuid.UUID
+    +FinishPos: int
+    +QualifyingPos: int
+  }
+
+  class Stats {
+    +TotalRaces: int
+    +TotalWins: int
+    +TotalPodiums: int
+    +TotalPoints: int
+    +TotalPoles: int
+    +BestFinish: int
+    +BestQualifying: int
+    +ChampionshipsWins: int
+    +BestChampionshipPosition: int
+  }
+
+  class DriverStats {
+    +Driver: Driver
+    +Stats: Stats
+  }
+
+  class TeamStats {
+    +Team: Team
+    +Stats: Stats
+  }
+
+  class SudokuCondition {
+    +Label: string
+    +Field: string
+    +Op: ConditionOperator
+    +Value: int
+  }
+
+  class MatrixDrivers {
+    +Field: [3][3][]Driver
+    +ConditionSpecs: [2][3]SudokuCondition
+  }
+
+  class MatrixTeams {
+    +Field: [3][3][]Team
+    +ConditionSpecs: [2][3]SudokuCondition
+  }
+}
+
+User --> Role
+User "1" --> "*" Driver : favourite drivers
+User "1" --> "*" Team : favourite teams
+CarParticipant --> Car
+CarParticipant --> Team
+CarParticipant "*" --> "*" Driver
+Race --> Track
+Race --> Championship
+RaceResult --> Race
+RaceResult --> CarParticipant
+DriverStats --> Driver
+DriverStats --> Stats
+TeamStats --> Team
+TeamStats --> Stats
+SudokuCondition --> ConditionOperator
+MatrixDrivers --> Driver
+MatrixDrivers --> SudokuCondition
+MatrixTeams --> Team
+MatrixTeams --> SudokuCondition
+@enduml
