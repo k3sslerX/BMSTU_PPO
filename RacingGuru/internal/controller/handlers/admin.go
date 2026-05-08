@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -13,6 +14,18 @@ func (h *Handler) requireUser(w http.ResponseWriter, r *http.Request) (models.Us
 	user, ok := getUserFromContext(r.Context())
 	if !ok {
 		h.sendError(w, "unauthorized", "UNAUTHORIZED", http.StatusUnauthorized)
+		return models.User{}, false
+	}
+	return user, true
+}
+
+func (h *Handler) requireAdmin(w http.ResponseWriter, r *http.Request) (models.User, bool) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return models.User{}, false
+	}
+	if user.Role != models.RoleAdmin {
+		h.sendError(w, "permission denied", "PERMISSION_DENIED", http.StatusForbidden)
 		return models.User{}, false
 	}
 	return user, true
@@ -31,6 +44,164 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func parseUUIDParam(h *Handler, w http.ResponseWriter, r *http.Request, name string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(chi.URLParam(r, name))
+	if err != nil {
+		h.sendLoggedError(w, r, "invalid data", "INVALID_DATA", http.StatusBadRequest, err)
+		return uuid.Nil, false
+	}
+
+	return id, true
+}
+
+// ListCars godoc
+// @Summary List cars
+// @Tags admin
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param q query string false "Search by model"
+// @Success 200 {array} models.Car
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/cars [get]
+func (h *Handler) ListCars(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	items, err := h.Repo.ListCars(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+// ListCarParticipants godoc
+// @Summary List car participants
+// @Tags admin
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param q query string false "Search by number"
+// @Success 200 {array} models.CarParticipant
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/car-participants [get]
+func (h *Handler) ListCarParticipants(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	items, err := h.Repo.ListCarParticipants(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+// ListChampionships godoc
+// @Summary List championships
+// @Tags admin
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param q query string false "Search by year"
+// @Success 200 {array} models.Championship
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/championships [get]
+func (h *Handler) ListChampionships(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	items, err := h.Repo.ListChampionships(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+// ListRaces godoc
+// @Summary List races
+// @Tags admin
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param q query string false "Search by name"
+// @Success 200 {array} models.Race
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/races [get]
+func (h *Handler) ListRaces(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	items, err := h.Repo.ListRaces(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+// ListTracks godoc
+// @Summary List tracks
+// @Tags admin
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param q query string false "Search by name"
+// @Success 200 {array} models.Track
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/tracks [get]
+func (h *Handler) ListTracks(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	items, err := h.Repo.ListTracks(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+// ListUsers godoc
+// @Summary List users
+// @Tags admin
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Param q query string false "Search by name or email"
+// @Success 200 {array} AdminUserResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/users [get]
+func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	users, err := h.Repo.ListUsers(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	response := make([]AdminUserResponse, 0, len(users))
+	for _, user := range users {
+		response = append(response, AdminUserResponse{
+			Id:    user.Id.String(),
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  user.Role,
+		})
+	}
+	writeJSON(w, http.StatusOK, response)
 }
 
 // CreateDriver godoc
@@ -479,4 +650,159 @@ func (h *Handler) UpsertRaceResult(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, updated)
+}
+
+// DeleteDriver godoc
+// @Summary Delete driver
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Driver UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/drivers/{id} [delete]
+func (h *Handler) DeleteDriver(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteDriverUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteTeam godoc
+// @Summary Delete team
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Team UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/teams/{id} [delete]
+func (h *Handler) DeleteTeam(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteTeamUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteTrack godoc
+// @Summary Delete track
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Track UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/tracks/{id} [delete]
+func (h *Handler) DeleteTrack(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteTrackUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteRace godoc
+// @Summary Delete race
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Race UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/races/{id} [delete]
+func (h *Handler) DeleteRace(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteRaceUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteCarParticipant godoc
+// @Summary Delete car participant
+// @Tags admin
+// @Param Authorization header string true "Bearer token"
+// @Param id path string true "Car participant UUID"
+// @Success 204
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 403 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /admin/car-participants/{id} [delete]
+func (h *Handler) DeleteCarParticipant(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(h, w, r, "id")
+	if !ok {
+		return
+	}
+
+	uc := admin.NewDeleteCarParticipantUseCase(h.Repo, user)
+	if err := uc.Run(r.Context(), id); err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -1,0 +1,123 @@
+<section class="page-shell page-shell--wide sudoku-gate stack" [class.is-locked]="!auth.isLoggedIn()">
+  <div class="sudoku-content stack">
+    <div class="section-heading">
+      <span class="eyebrow">Sudoku</span>
+      <h1>Персональные матрицы для авторизованного пользователя.</h1>
+      <p class="lead">
+        Введите пилота или команду в ячейку. Если ответ подходит под пересечение условий, ячейка станет зелёной.
+      </p>
+    </div>
+
+    <div class="button-row">
+      <button
+        type="button"
+        [class.button]="mode() === 'drivers'"
+        [class.secondary-button]="mode() !== 'drivers'"
+        (click)="load('drivers')"
+      >
+        {{ busy() && mode() === 'drivers' ? 'Обновляем гонщиков...' : 'Driver board' }}
+      </button>
+      <button
+        type="button"
+        [class.button]="mode() === 'teams'"
+        [class.secondary-button]="mode() !== 'teams'"
+        (click)="load('teams')"
+      >
+        {{ busy() && mode() === 'teams' ? 'Обновляем команды...' : 'Team board' }}
+      </button>
+    </div>
+
+    @if (feedback()) {
+      <div class="flash flash-error">
+        <strong>Sudoku запрос не удался</strong>
+        <p>{{ feedback() }}</p>
+      </div>
+    }
+
+    <section class="panel stack">
+      <div class="board-heading">
+        <div>
+          <span class="eyebrow">{{ mode() === 'drivers' ? 'Driver matrix' : 'Team matrix' }}</span>
+          <h2>{{ busy() ? 'Обновляем поле...' : 'Заполните поле' }}</h2>
+        </div>
+        @if (directoryBusy()) {
+          <span class="directory-status">Загружаем список...</span>
+        }
+      </div>
+
+      <div class="matrix-shell" (scroll)="repositionDropdown()">
+        <div class="matrix-grid">
+          <div class="matrix-cell matrix-corner">×</div>
+
+          @for (condition of columnConditions(); track condition.label) {
+            <div class="matrix-cell matrix-condition matrix-condition-top">
+              <strong>{{ condition.label }}</strong>
+            </div>
+          }
+
+          @for (row of activeField(); track $index; let rowIndex = $index) {
+            <div class="matrix-cell matrix-condition matrix-condition-side">
+              <strong>{{ rowCondition(rowIndex).label }}</strong>
+            </div>
+
+            @for (cell of row; track $index; let columnIndex = $index) {
+              <div
+                class="matrix-cell matrix-payload"
+                [class.is-correct]="cellState(rowIndex, columnIndex).status === 'correct'"
+                [class.is-wrong]="cellState(rowIndex, columnIndex).status === 'wrong'"
+              >
+                @if (cellState(rowIndex, columnIndex).locked) {
+                  <div class="locked-answer">
+                    <strong>{{ cellState(rowIndex, columnIndex).selectedName }}</strong>
+                  </div>
+                } @else {
+                  <div class="cell-combo">
+                    <div class="combo-control">
+                      <input
+                        #sudokuInput
+                        type="text"
+                        [value]="cellState(rowIndex, columnIndex).query"
+                        [placeholder]="inputPlaceholder()"
+                        autocomplete="off"
+                        (focus)="openDropdown(rowIndex, columnIndex, sudokuInput)"
+                        (input)="updateCellInput(rowIndex, columnIndex, $any($event.target).value, sudokuInput)"
+                      />
+                    </div>
+
+                    @if (cellState(rowIndex, columnIndex).status === 'wrong') {
+                      <small class="cell-message">{{ cellState(rowIndex, columnIndex).message }}</small>
+                    } @else {
+                      <small class="cell-message muted">Подходящих ответов: {{ cell.length }}</small>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          } @empty {
+            @for (row of [0, 1, 2]; track row) {
+              <div class="matrix-cell matrix-condition matrix-condition-side">
+                <strong>Hidden condition</strong>
+              </div>
+              @for (column of [0, 1, 2]; track column) {
+                <div class="matrix-cell matrix-payload">
+                  <div class="cell-combo">
+                    <div class="combo-control">
+                      <input type="text" placeholder="Введите ответ" disabled />
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  @if (!auth.isLoggedIn()) {
+    <div class="sudoku-lock" aria-live="polite">
+      <strong>Авторизуйтесь, чтобы проверить свои знания</strong>
+      <a class="button" routerLink="/auth">Вход</a>
+    </div>
+  }
+</section>

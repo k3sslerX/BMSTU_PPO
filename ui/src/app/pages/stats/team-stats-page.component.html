@@ -1,0 +1,119 @@
+<section class="page-shell page-shell--wide stack">
+  <div class="stats-page-head">
+    <div class="section-heading">
+      <span class="eyebrow">Stats / Teams</span>
+      <h1>Статистика команд.</h1>
+      <p class="lead">
+        Соберите до четырёх команд на одной странице: список раскрывается полностью, ввод фильтрует совпадения, а лучшие
+        значения подсвечиваются зелёным, при равенстве лучших — жёлтым.
+      </p>
+    </div>
+
+    <nav class="stats-tabs" aria-label="Страницы статистики">
+      <a routerLink="/stats/drivers" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Пилоты</a>
+      <a routerLink="/stats/teams" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Команды</a>
+    </nav>
+  </div>
+
+  @if (listFeedback(); as item) {
+    <div class="flash flash-error">
+      <strong>Не удалось загрузить список команд</strong>
+      <p>{{ item.text }}</p>
+    </div>
+  }
+
+  <section class="panel glass-panel selector-panel">
+    <div class="section-heading">
+      <span class="eyebrow">Compare</span>
+      <h2>Добавить команду</h2>
+      <p class="hint">В сравнении сейчас {{ comparison().length }} из {{ maxComparisonItems }}.</p>
+    </div>
+
+    <form class="selector-form" [formGroup]="teamForm" (ngSubmit)="addTeamStats()">
+      <div class="field combo-field">
+        <span>Команда</span>
+        <div class="combo-control">
+          <input
+            #teamInput
+            type="text"
+            formControlName="teamQuery"
+            placeholder="Начните вводить название, страну или UUID"
+            autocomplete="off"
+            (focus)="openDropdown(teamInput)"
+            (input)="syncTeamInput($any($event.target).value, teamInput)"
+          />
+        </div>
+
+        @if (selectedTeam(); as team) {
+          <small class="selected-entity">Выбрана: {{ team.name }} · {{ team.id }}</small>
+        }
+      </div>
+
+      <button class="button" type="submit" [disabled]="statsBusy() || comparison().length >= maxComparisonItems">
+        {{ statsBusy() ? 'Добавляем...' : 'Добавить в сравнение' }}
+      </button>
+    </form>
+  </section>
+
+  @if (feedback(); as item) {
+    <div class="toast-layer" aria-live="polite">
+      <div class="flash" [class.flash-error]="item.kind === 'error'" [class.flash-success]="item.kind === 'info'">
+        <strong>{{ item.kind === 'error' ? 'Не получилось' : 'Готово' }}</strong>
+        <p>{{ item.text }}</p>
+      </div>
+    </div>
+  }
+
+  @if (comparison().length) {
+    <section class="comparison-grid" aria-label="Сравнение команд">
+      @for (result of comparison(); track result.team.id) {
+        <article class="comparison-card panel">
+          <div class="identity-card">
+            <div>
+              <strong>{{ result.team.name }}</strong>
+              <span>{{ result.team.country }}</span>
+              <small>{{ result.team.id }}</small>
+            </div>
+            <div class="identity-actions">
+              <button
+                class="heart-button"
+                type="button"
+                [class.is-favourite]="isTeamFavourite(result.team.id)"
+                [disabled]="favouriteBusyId() === result.team.id"
+                [attr.aria-label]="isTeamFavourite(result.team.id) ? 'Удалить команду из избранного' : 'Добавить команду в избранное'"
+                (click)="toggleTeamFavourite(result)"
+              >
+                ♥
+              </button>
+              <button class="remove-button" type="button" (click)="removeTeamStats(result.team.id)">Убрать</button>
+            </div>
+          </div>
+
+          <div class="metric-grid comparison-metrics">
+            @for (metric of metricDefinitions; track metric.key) {
+              <article
+                class="metric-card"
+                [class.is-best]="metricHighlight(result.stats, metric) === 'best'"
+                [class.is-tied-best]="metricHighlight(result.stats, metric) === 'tied'"
+              >
+                <span>{{ metric.label }}</span>
+                <strong>{{ metricValue(result.stats, metric) }}</strong>
+                @if (metricHighlight(result.stats, metric) === 'best') {
+                  <small>Лучший показатель</small>
+                } @else if (metricHighlight(result.stats, metric) === 'tied') {
+                  <small>Лучший показатель: ничья</small>
+                }
+              </article>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  } @else {
+    <section class="panel empty-state">
+      <span class="eyebrow">Empty grid</span>
+      <h2>Выберите первую команду.</h2>
+      <p>После добавления второй команды карточки начнут подсвечивать лучших по каждому показателю.</p>
+    </section>
+  }
+</section>

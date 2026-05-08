@@ -38,6 +38,9 @@ func mapError(err error) (message, code string, status int) {
 	if errors.Is(err, shared.ErrorInvalidAdminSecret) {
 		return "invalid admin secret", "INVALID_ADMIN_SECRET", http.StatusForbidden
 	}
+	if errors.Is(err, shared.ErrorTokenExpired) {
+		return "token expired", "TOKEN_EXPIRED", http.StatusUnauthorized
+	}
 	if errors.Is(err, shared.ErrorInvalidToken) {
 		return "invalid token", "INVALID_TOKEN", http.StatusForbidden
 	}

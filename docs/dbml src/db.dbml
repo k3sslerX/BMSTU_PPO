@@ -1,100 +1,135 @@
-Table car {
-  id integer [primary key]
-  manufacturer integer
-  model text
-  year_of_production integer
-  raceclass integer
-}
-
-Table car_p {
-  id integer [primary key]
-  car integer
-  team integer
-  number text
-}
-
-Table championship {
-  id integer [primary key]
-  organizer integer
-  year integer
-}
-
-Table driver {
-  id integer [primary key]
-  name text
-  birthday datetime
-  nationality text
-}
-
-Table finish {
-  race integer
-  car_p integer
-  pos integer
-}
-
-Table qualifying {
-  race integer
-  car_p integer
-  pos integer
+Project RacingGuru_updated {
+  database_type: 'PostgreSQL'
+  Note: 'Актуальная схема по RacingGuru/migrations/000001_init.up.sql. Расчетные функции: CalculateDriverStats, CalculateTeamStats, CalculatePersonalPoints.'
 }
 
 Table manufacturer {
-  id integer [primary key]
-  name text
-  country text
-  year_of_foundation integer
-}
-
-Table organizer {
-  id integer [primary key]
-  name text
-}
-
-Table race {
-  id integer [primary key]
-  championship integer
-  track integer
-  name text
-  date datetime
-  type integer
-  duration integer
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  country text [not null]
+  year_of_foundation integer [not null]
 }
 
 Table raceclass {
-  id integer [primary key]
-  name text
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  docs text
+}
+
+Table car {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  model text [not null]
+  year_of_production integer [not null]
+  manufacturer uuid
+  raceclass uuid
 }
 
 Table team {
-  id integer [primary key]
-  name text
-  year_of_foundation integer
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  logo bytea
+  country text
+}
+
+Table car_p {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  number text [not null]
+  car uuid
+  team uuid
 }
 
 Table team_p {
-  id integer [primary key]
-  car_p integer
-  driver integer
+  car_p uuid
+  driver uuid
+}
+
+Table organizer {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+}
+
+Table championship {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  year integer [not null]
+  organizer uuid
 }
 
 Table track {
-  id integer [primary key]
-  name text
-  country text
-  lap_length integer
-  turns integer
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  country text [not null]
+  schema bytea
+  lap_length integer [not null]
+  turns integer [not null]
 }
 
-Ref car_car_p: car.id < car_p.car
-Ref manufacturer_car: manufacturer.id < car.manufacturer
-Ref organizer_ch: organizer.id < championship.organizer
-Ref c_rc: raceclass.id < car.raceclass
-Ref c_r: championship.id < race.championship
-Ref finish: finish.race > race.id
-Ref finish_c: car_p.id > finish.car_p
-Ref cars: team.id <> car_p.team
-Ref car_p_team_p: car_p.id - team_p.car_p
-Ref drivers: driver.id <> team_p.driver
-Ref quali: qualifying.race > race.id
-Ref quali_c: car_p.id > qualifying.car_p
-Ref track_r: track.id < race.track
+Table race {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  date date [not null]
+  type integer [not null]
+  duration integer [not null]
+  track uuid
+  championship uuid
+}
+
+Table driver {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  photo bytea
+  nationality text [not null]
+  birthday date [not null]
+
+  indexes {
+    (name, nationality, birthday) [unique, name: 'unique_driver']
+  }
+}
+
+Table finish {
+  pos integer [not null]
+  race uuid
+  car_p uuid
+}
+
+Table qualifying {
+  pos integer [not null]
+  car_p uuid
+  race uuid
+}
+
+Table users {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name text [not null]
+  email text [not null]
+  passwordhash varchar(256) [not null]
+  role text [not null, note: 'admin | user']
+  created_at timestamp
+}
+
+Table favourite_drivers {
+  user_id uuid [not null]
+  driver uuid [not null]
+}
+
+Table favourite_teams {
+  user_id uuid [not null]
+  team uuid [not null]
+}
+
+Ref: car.manufacturer > manufacturer.id [delete: cascade]
+Ref: car.raceclass > raceclass.id [delete: cascade]
+Ref: car_p.car > car.id [delete: cascade]
+Ref: car_p.team > team.id [delete: cascade]
+Ref: team_p.car_p > car_p.id [delete: cascade]
+Ref: team_p.driver > driver.id [delete: cascade]
+Ref: championship.organizer > organizer.id [delete: cascade]
+Ref: race.track > track.id [delete: cascade]
+Ref: race.championship > championship.id [delete: cascade]
+Ref: finish.race > race.id [delete: cascade]
+Ref: finish.car_p > car_p.id [delete: cascade]
+Ref: qualifying.race > race.id [delete: cascade]
+Ref: qualifying.car_p > car_p.id [delete: cascade]
+Ref: favourite_drivers.user_id > users.id
+Ref: favourite_drivers.driver > driver.id
+Ref: favourite_teams.user_id > users.id
+Ref: favourite_teams.team > team.id

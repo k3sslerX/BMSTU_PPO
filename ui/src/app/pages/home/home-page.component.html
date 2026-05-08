@@ -1,0 +1,44 @@
+<section class="home-hero page-shell page-shell--wide">
+  <div class="hero-stage" aria-label="Гоночные автомобили RacingGuru">
+    <div class="image-rotator">
+      @for (slide of carSlides; track slide.src; let index = $index) {
+        <figure class="car-slide" [style.animation-delay.s]="index * 5">
+          <img [src]="slide.src" [alt]="slide.title" />
+          <figcaption>
+            <strong>{{ slide.title }}</strong>
+            <span>{{ slide.caption }}</span>
+          </figcaption>
+        </figure>
+      }
+    </div>
+
+    <div class="speed-readout">
+      <span>RG-26</span>
+      <strong>REDLINE DATA</strong>
+    </div>
+  </div>
+
+  <div class="hero-copy">
+    <span class="eyebrow">RacingGuru cockpit</span>
+    <h1>Данные на скорости гоночного круга.</h1>
+    <p class="lead">
+      RacingGuru собирает статистику, избранное и sudoku-челленджи в один пульт для тех,
+      для кого гонки это не только про машины и пилотов.
+    </p>
+
+    <div class="hero-actions">
+      <a class="button" routerLink="/stats">Выехать на статистику</a>
+      <a class="button secondary-button" routerLink="/sudoku">Открыть sudoku</a>
+    </div>
+  </div>
+</section>
+
+<section class="page-shell page-shell--wide race-grid">
+  @for (item of sections; track item.title) {
+    <article class="panel race-card">
+      <span class="card-index">0{{ $index + 1 }}</span>
+      <h2>{{ item.title }}</h2>
+      <p>{{ item.description }}</p>
+    </article>
+  }
+</section>

@@ -25,6 +25,18 @@ func (repo *testRepo) GetTeamStats(ctx context.Context, team models.Team) (model
 	return models.TeamStats{}, shared.ErrorNotFound
 }
 
+func (repo *testRepo) ListDrivers(ctx context.Context, query string) ([]models.Driver, error) {
+	return []models.Driver{
+		{Id: uuid.MustParse("11111111-1111-1111-1111-111111111111"), Name: "testName"},
+	}, nil
+}
+
+func (repo *testRepo) ListTeams(ctx context.Context, query string) ([]models.Team, error) {
+	return []models.Team{
+		{Id: uuid.MustParse("22222222-2222-2222-2222-222222222222"), Name: "testName"},
+	}, nil
+}
+
 func (repo *testRepo) GetDriverByName(ctx context.Context, name string) (models.Driver, error) {
 	if name == "testName" {
 		return models.Driver{Id: uuid.MustParse("11111111-1111-1111-1111-111111111111"), Name: "testName"}, nil

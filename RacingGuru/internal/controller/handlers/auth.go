@@ -21,6 +21,37 @@ func newAuthUserResponse(user models.User) AuthUserResponse {
 	}
 }
 
+// Me godoc
+// @Summary Current user profile
+// @Tags auth
+// @Produce json
+// @Param Authorization header string true "Bearer token"
+// @Success 200 {object} AuthUserResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
+// @Router /me [get]
+func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.requireUser(w, r)
+	if !ok {
+		return
+	}
+
+	uc := auth.NewUserMeUseCase(h.Repo, user)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	profile, err := uc.Run(ctx)
+	if err != nil {
+		h.sendErrorExpanded(w, r, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(newAuthUserResponse(profile))
+}
+
 // ChangePassword godoc
 // @Summary Change user password
 // @Tags auth

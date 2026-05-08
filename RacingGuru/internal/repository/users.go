@@ -117,6 +117,38 @@ func (r *Repository) UserChangePassword(ctx context.Context, user models.User, p
 	return nil
 }
 
+func (r *Repository) GetUserByID(ctx context.Context, user models.User) (models.User, error) {
+	var id, name, email, role string
+	query, args, err := statementBuilder().
+		Select("id", "name", "email", "role").
+		From("users").
+		Where(sq.Eq{"id": user.Id}).
+		ToSql()
+	if err != nil {
+		return models.User{}, err
+	}
+
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&id, &name, &email, &role)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.User{}, shared.ErrorNotFound
+		}
+		return models.User{}, err
+	}
+
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	return models.User{
+		Id:    userID,
+		Name:  name,
+		Email: email,
+		Role:  models.Role(role),
+	}, nil
+}
+
 func (r *Repository) UpdateUserRole(ctx context.Context, user models.User) (models.User, error) {
 	if user.Id == uuid.Nil || (user.Role != models.RoleAdmin && user.Role != models.RoleUser) {
 		return models.User{}, shared.ErrorInvalidData
@@ -140,6 +172,76 @@ func (r *Repository) UpdateUserRole(ctx context.Context, user models.User) (mode
 	}
 
 	return user, nil
+}
+
+func (r *Repository) ListFavouriteDrivers(ctx context.Context, user models.User) ([]models.Driver, error) {
+	query, args, err := statementBuilder().
+		Select("d.id", "d.name", "d.birthday", "d.nationality").
+		From("favourite_drivers fd").
+		Join("driver d ON d.id = fd.driver").
+		Where(sq.Eq{"fd.user_id": user.Id}).
+		OrderBy("d.name ASC").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	drivers := make([]models.Driver, 0)
+	for rows.Next() {
+		var driver models.Driver
+		var birthday time.Time
+		if err := rows.Scan(&driver.Id, &driver.Name, &birthday, &driver.Nationality); err != nil {
+			return nil, err
+		}
+		driver.Birthday = birthday.Format(time.DateOnly)
+		drivers = append(drivers, driver)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return drivers, nil
+}
+
+func (r *Repository) ListFavouriteTeams(ctx context.Context, user models.User) ([]models.Team, error) {
+	query, args, err := statementBuilder().
+		Select("t.id", "t.name", "t.country").
+		From("favourite_teams ft").
+		Join("team t ON t.id = ft.team").
+		Where(sq.Eq{"ft.user_id": user.Id}).
+		OrderBy("t.name ASC").
+		ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.Pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	teams := make([]models.Team, 0)
+	for rows.Next() {
+		var team models.Team
+		if err := rows.Scan(&team.Id, &team.Name, &team.Country); err != nil {
+			return nil, err
+		}
+		teams = append(teams, team)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return teams, nil
 }
 
 func (r *Repository) ToggleFavouriteDriver(ctx context.Context, user models.User, driver models.Driver) error {

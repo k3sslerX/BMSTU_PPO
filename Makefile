@@ -19,4 +19,7 @@ build:
 	cd RacingGuru/cmd && go build -o ../../exec/server.exe .
 
 docker-build:
-	cd RacingGuru && docker compose up --build
+	docker compose up --build
+
+docker-run:
+	docker compose up

@@ -1,0 +1,256 @@
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(24rem, 0.9fr);
+  gap: clamp(1.2rem, 3vw, 2.4rem);
+  align-items: center;
+  min-height: calc(100vh - 9rem);
+}
+
+.hero-stage {
+  position: relative;
+  min-height: clamp(26rem, 55vw, 42rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2rem;
+  background:
+    linear-gradient(135deg, rgba(229, 9, 20, 0.24), transparent 32%),
+    radial-gradient(circle at 78% 18%, rgba(255, 77, 85, 0.22), transparent 28%),
+    linear-gradient(160deg, #202228, #08090b 68%);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.46);
+}
+
+.hero-stage::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.hero-stage::after {
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 100%),
+    repeating-linear-gradient(115deg, transparent 0 18px, rgba(255, 255, 255, 0.04) 18px 20px);
+  background-size: 5rem 100%, auto;
+  mix-blend-mode: screen;
+  opacity: 0.34;
+}
+
+.image-rotator,
+.car-slide {
+  position: absolute;
+  inset: 0;
+}
+
+.car-slide {
+  margin: 0;
+  opacity: 0;
+  animation: car-rotate 20s infinite;
+}
+
+.car-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.08) contrast(1.08);
+  transform: scale(1.04);
+}
+
+.car-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 6, 0.78), rgba(5, 5, 6, 0.18) 58%, rgba(5, 5, 6, 0.72)),
+    linear-gradient(0deg, rgba(5, 5, 6, 0.8), transparent 42%);
+}
+
+.car-slide figcaption {
+  position: absolute;
+  z-index: 2;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: min(28rem, calc(100% - 2.5rem));
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1rem;
+  background: rgba(8, 9, 11, 0.68);
+  backdrop-filter: blur(16px);
+}
+
+.car-slide figcaption strong {
+  color: #fff;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.car-slide figcaption span {
+  color: var(--muted);
+}
+
+.speed-readout {
+  position: absolute;
+  z-index: 3;
+  top: 1.25rem;
+  left: 1.25rem;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(229, 9, 20, 0.32);
+  border-radius: 1rem;
+  background: rgba(8, 9, 11, 0.72);
+  box-shadow: inset 0 0 24px rgba(229, 9, 20, 0.14);
+}
+
+.speed-readout span {
+  color: var(--brand-strong);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.speed-readout strong {
+  font-size: 0.95rem;
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  min-width: 0;
+}
+
+.hero-copy h1 {
+  margin: 0;
+  width: min(100%, 12ch);
+  font-size: clamp(2.7rem, 6.5vw, 6.4rem);
+  line-height: 0.86;
+  letter-spacing: -0.062em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.slogan-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.1rem;
+  border-left: 0.25rem solid var(--brand);
+  border-radius: 1rem;
+  background: linear-gradient(90deg, rgba(229, 9, 20, 0.18), rgba(255, 255, 255, 0.04));
+}
+
+.slogan-card span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.slogan-card strong {
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.race-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding-top: 0;
+}
+
+.race-card {
+  min-height: 16rem;
+}
+
+.race-card p {
+  color: var(--muted);
+}
+
+.race-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.race-card::before {
+  content: '';
+  position: absolute;
+  top: -4rem;
+  right: -4rem;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229, 9, 20, 0.24), transparent 68%);
+}
+
+.card-index {
+  color: rgba(255, 255, 255, 0.18);
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.race-card h2 {
+  margin: auto 0 0;
+}
+
+.race-card p {
+  margin: 0.75rem 0 0;
+  line-height: 1.55;
+}
+
+@keyframes car-rotate {
+  0%,
+  20% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  25%,
+  100% {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@media (max-width: 1100px) {
+  .home-hero,
+  .race-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy h1 {
+    width: min(100%, 14ch);
+  }
+
+  .race-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .home-hero,
+  .race-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-copy h1 {
+    width: 100%;
+    font-size: clamp(2.25rem, 13vw, 4.25rem);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+
+  .hero-stage {
+    min-height: 24rem;
+  }
+}

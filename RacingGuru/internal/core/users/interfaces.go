@@ -6,6 +6,8 @@ import (
 )
 
 type Repo interface {
+	ListFavouriteDrivers(context.Context, models.User) ([]models.Driver, error)
+	ListFavouriteTeams(context.Context, models.User) ([]models.Team, error)
 	ToggleFavouriteDriver(context.Context, models.User, models.Driver) error
 	ToggleFavouriteTeam(context.Context, models.User, models.Team) error
 

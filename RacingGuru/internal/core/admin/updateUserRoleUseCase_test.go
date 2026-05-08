@@ -34,4 +34,10 @@ func TestUpdateUserRoleUseCase(t *testing.T) {
 	if !errors.Is(err, shared.ErrorNotFound) {
 		t.Error(err)
 	}
+
+	testUc4 := NewUpdateUserRoleUseCase(repo, models.User{Id: testManagedUserID, Role: models.RoleAdmin})
+	_, err = testUc4.Run(context.Background(), models.User{Id: testManagedUserID, Role: models.RoleUser})
+	if !errors.Is(err, shared.ErrorPermissionDenied) {
+		t.Error(err)
+	}
 }

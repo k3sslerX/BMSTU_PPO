@@ -29,8 +29,20 @@ type UpdateUserRoleRequest struct {
 	Role models.Role `json:"role" enums:"admin,user" example:"admin"`
 }
 
+type AdminUserResponse struct {
+	Id    string      `json:"id" example:"77777777-7777-7777-7777-777777777777"`
+	Name  string      `json:"name" example:"Max Verstappen"`
+	Email string      `json:"email" example:"user@example.com"`
+	Role  models.Role `json:"role" enums:"admin,user" example:"user"`
+}
+
 type ChangePasswordRequest struct {
 	Password string `json:"password" example:"newSecret123"`
+}
+
+type FavouritesResponse struct {
+	FavouriteDrivers []models.Driver `json:"favourite_drivers"`
+	FavouriteTeams   []models.Team   `json:"favourite_teams"`
 }
 
 type DriverStatsResponse struct {

@@ -9,8 +9,8 @@ import (
 )
 
 func (r *Repository) GetDriverMatrix(ctx context.Context, matrix models.MatrixDrivers) (models.MatrixDrivers, error) {
-	for rowIdx, rowCondition := range matrix.ConditionSpecs[0] {
-		for colIdx, colCondition := range matrix.ConditionSpecs[1] {
+	for colIdx, colCondition := range matrix.ConditionSpecs[0] {
+		for rowIdx, rowCondition := range matrix.ConditionSpecs[1] {
 			drivers, err := r.getDriversByConditions(ctx, rowCondition, colCondition)
 			if err != nil {
 				return models.MatrixDrivers{}, err
@@ -23,8 +23,8 @@ func (r *Repository) GetDriverMatrix(ctx context.Context, matrix models.MatrixDr
 }
 
 func (r *Repository) GetTeamMatrix(ctx context.Context, matrix models.MatrixTeams) (models.MatrixTeams, error) {
-	for rowIdx, rowCondition := range matrix.ConditionSpecs[0] {
-		for colIdx, colCondition := range matrix.ConditionSpecs[1] {
+	for colIdx, colCondition := range matrix.ConditionSpecs[0] {
+		for rowIdx, rowCondition := range matrix.ConditionSpecs[1] {
 			teams, err := r.getTeamsByConditions(ctx, rowCondition, colCondition)
 			if err != nil {
 				return models.MatrixTeams{}, err
