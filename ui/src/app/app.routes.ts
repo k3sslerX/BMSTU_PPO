@@ -46,7 +46,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/admin/admin-page.component').then((m) => m.AdminPageComponent)
   },
   {
+    path: '404',
+    title: 'RacingGuru | 404',
+    loadComponent: () => import('./pages/not-found/not-found-page.component').then((m) => m.NotFoundPageComponent)
+  },
+  {
     path: '**',
-    redirectTo: ''
+    title: 'RacingGuru | 404',
+    loadComponent: () => import('./pages/not-found/not-found-page.component').then((m) => m.NotFoundPageComponent)
   }
 ];
