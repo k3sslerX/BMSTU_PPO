@@ -11,6 +11,11 @@ type Matrix = MatrixDrivers | MatrixTeams;
 type Entity = Driver | Team;
 type CellStatus = 'empty' | 'correct' | 'wrong';
 
+interface Feedback {
+  kind: 'success' | 'error';
+  text: string;
+}
+
 interface CellState {
   query: string;
   status: CellStatus;
@@ -35,7 +40,9 @@ export class SudokuPageComponent implements OnInit, OnDestroy {
   protected readonly mode = signal<Mode>('drivers');
   protected readonly busy = signal(false);
   protected readonly directoryBusy = signal(false);
+  protected readonly completionBusy = signal(false);
   protected readonly feedback = signal<string | null>(null);
+  protected readonly completionFeedback = signal<Feedback | null>(null);
   protected readonly driversMatrix = signal<MatrixDrivers | null>(null);
   protected readonly teamsMatrix = signal<MatrixTeams | null>(null);
   protected readonly drivers = signal<Driver[]>([]);
@@ -78,6 +85,7 @@ export class SudokuPageComponent implements OnInit, OnDestroy {
 
     this.mode.set(mode);
     this.feedback.set(null);
+    this.completionFeedback.set(null);
     this.cellStates.set({});
     this.closeDropdown();
     this.loadDirectory(mode);
@@ -183,6 +191,10 @@ export class SudokuPageComponent implements OnInit, OnDestroy {
       message: isAlreadyUsed ? 'Уже используется в этой матрице' : 'Не подходит для этой ячейки'
     });
     this.closeDropdown();
+
+    if (isCorrect) {
+      this.saveCompletionWhenMatrixFilled();
+    }
   }
 
   private loadDirectory(mode: Mode): void {
@@ -224,6 +236,46 @@ export class SudokuPageComponent implements OnInit, OnDestroy {
 
   private cellKey(rowIndex: number, columnIndex: number): string {
     return `${this.mode()}:${rowIndex}:${columnIndex}`;
+  }
+
+  private saveCompletionWhenMatrixFilled(): void {
+    if (!this.isCurrentMatrixFilled() || this.completionBusy()) {
+      return;
+    }
+
+    this.completionBusy.set(true);
+    this.completionFeedback.set(null);
+
+    const mode = this.mode();
+    const request$ = mode === 'drivers' ? this.api.completeDriverSudoku() : this.api.completeTeamSudoku();
+
+    request$
+      .pipe(finalize(() => this.completionBusy.set(false)))
+      .subscribe({
+        next: () => {
+          this.completionFeedback.set({
+            kind: 'success',
+            text: mode === 'drivers' ? 'Матрица пилотов сохранена.' : 'Матрица команд сохранена.'
+          });
+        },
+        error: (error: unknown) => {
+          this.completionFeedback.set({
+            kind: 'error',
+            text: readApiError(error)
+          });
+        }
+      });
+  }
+
+  private isCurrentMatrixFilled(): boolean {
+    const totalCells = this.activeField().reduce((sum, row) => sum + row.length, 0);
+    if (!totalCells) {
+      return false;
+    }
+
+    const prefix = `${this.mode()}:`;
+    const lockedCells = Object.entries(this.cellStates()).filter(([key, state]) => key.startsWith(prefix) && state.locked).length;
+    return lockedCells === totalCells;
   }
 
   private usedEntityIds(): ReadonlySet<string> {

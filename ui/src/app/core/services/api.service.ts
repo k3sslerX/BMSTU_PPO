@@ -14,6 +14,7 @@ import {
   MatrixTeams,
   Race,
   Role,
+  SudokuCompletionStats,
   Team,
   TeamStatsResponse,
   TokenResponse,
@@ -78,6 +79,18 @@ export class ApiService {
 
   getTeamSudoku(): Observable<MatrixTeams> {
     return this.http.get<MatrixTeams>(this.url('/sudoku/teams'));
+  }
+
+  completeDriverSudoku(): Observable<void> {
+    return this.http.post<void>(this.url('/sudoku/drivers/completions'), {});
+  }
+
+  completeTeamSudoku(): Observable<void> {
+    return this.http.post<void>(this.url('/sudoku/teams/completions'), {});
+  }
+
+  getSudokuCompletionStats(): Observable<SudokuCompletionStats> {
+    return this.http.get<SudokuCompletionStats>(this.url('/sudoku/completions'));
   }
 
   toggleFavouriteDriver(payload: unknown): Observable<void> {
