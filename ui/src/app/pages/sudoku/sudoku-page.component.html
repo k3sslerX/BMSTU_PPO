@@ -34,6 +34,13 @@
       </div>
     }
 
+    @if (completionFeedback(); as item) {
+      <div class="flash" [class.flash-success]="item.kind === 'success'" [class.flash-error]="item.kind === 'error'">
+        <strong>{{ item.kind === 'success' ? 'Матрица заполнена' : 'Не удалось сохранить результат' }}</strong>
+        <p>{{ item.text }}</p>
+      </div>
+    }
+
     <section class="panel stack">
       <div class="board-heading">
         <div>

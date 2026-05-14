@@ -36,6 +36,43 @@ func (r *Repository) GetTeamMatrix(ctx context.Context, matrix models.MatrixTeam
 	return matrix, nil
 }
 
+func (r *Repository) CompleteSudokuMatrix(ctx context.Context, user models.User, matrixType models.SudokuMatrixType) error {
+	query, args, err := statementBuilder().
+		Insert("sudoku_matrix_completions").
+		Columns("user_id", "matrix_type").
+		Values(user.Id, string(matrixType)).
+		Suffix("ON CONFLICT (user_id, matrix_type, completed_on) DO NOTHING").
+		ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = r.Pool.Exec(ctx, query, args...)
+	return err
+}
+
+func (r *Repository) GetSudokuCompletionStats(ctx context.Context, user models.User) (models.SudokuCompletionStats, error) {
+	query, args, err := statementBuilder().
+		Select(
+			"COUNT(*) FILTER (WHERE matrix_type = 'drivers')",
+			"COUNT(*) FILTER (WHERE matrix_type = 'teams')",
+		).
+		From("sudoku_matrix_completions").
+		Where(sq.Eq{"user_id": user.Id}).
+		ToSql()
+	if err != nil {
+		return models.SudokuCompletionStats{}, err
+	}
+
+	var stats models.SudokuCompletionStats
+	err = r.Pool.QueryRow(ctx, query, args...).Scan(&stats.DriverMatrices, &stats.TeamMatrices)
+	if err != nil {
+		return models.SudokuCompletionStats{}, err
+	}
+
+	return stats, nil
+}
+
 func (r *Repository) getDriversByConditions(ctx context.Context, firstCondition models.SudokuCondition, secondCondition models.SudokuCondition) ([]models.Driver, error) {
 	firstConditionSQL, firstArg, err := buildStatsConditionSQL("stats", firstCondition)
 	if err != nil {

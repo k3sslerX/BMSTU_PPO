@@ -16,7 +16,27 @@
         <span>Профиль RacingGuru</span>
       </div>
 
-      <p class="subtle-text">Здесь скоро что-то появится.</p>
+      <div class="matrix-stats">
+        <div class="matrix-stat">
+          <span>Матрицы пилотов</span>
+          <strong>{{ sudokuCompletionStats().driver_matrices }}</strong>
+        </div>
+        <div class="matrix-stat">
+          <span>Матрицы команд</span>
+          <strong>{{ sudokuCompletionStats().team_matrices }}</strong>
+        </div>
+      </div>
+
+      @if (sudokuStatsBusy()) {
+        <p class="subtle-text">Обновляем статистику матриц...</p>
+      }
+
+      @if (sudokuStatsFeedback(); as item) {
+        <div class="flash flash-error">
+          <strong>Не удалось загрузить статистику матриц</strong>
+          <p>{{ item.text }}</p>
+        </div>
+      }
     </article>
 
     <form class="panel stack" [formGroup]="passwordForm" (ngSubmit)="changePassword()">

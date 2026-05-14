@@ -60,6 +60,9 @@ func (h *Handler) Routes() http.Handler {
 		r.Route("/sudoku", func(r chi.Router) {
 			r.Get("/drivers", h.SudokuDrivers)
 			r.Get("/teams", h.SudokuTeams)
+			r.Get("/completions", h.SudokuCompletions)
+			r.Post("/drivers/completions", h.CompleteSudokuDrivers)
+			r.Post("/teams/completions", h.CompleteSudokuTeams)
 		})
 		r.Route("/admin", func(r chi.Router) {
 			r.Get("/cars", h.ListCars)

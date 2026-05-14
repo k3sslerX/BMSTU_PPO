@@ -137,6 +137,11 @@ export interface MatrixTeams {
   condition_specs: SudokuCondition[][];
 }
 
+export interface SudokuCompletionStats {
+  driver_matrices: number;
+  team_matrices: number;
+}
+
 export interface JwtClaims {
   user_id: string;
   role: Role;
