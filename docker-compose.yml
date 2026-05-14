@@ -19,6 +19,25 @@ services:
       timeout: 5s
       retries: 10
 
+  mysql:
+    image: mysql:${MYSQL_IMAGE_TAG:-8.4}
+    container_name: ${MYSQL_CONTAINER_NAME:-racingguru-mysql}
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-races}
+      MYSQL_USER: ${MYSQL_USER:-races}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1337}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   migrate:
     image: migrate/migrate:${MIGRATE_IMAGE_TAG:-v4.18.3}
     container_name: ${MIGRATE_CONTAINER_NAME:-racingguru-migrate}
@@ -30,11 +49,47 @@ services:
     command:
       [
         "-path",
-        "/migrations",
+        "/migrations/postgresql",
         "-database",
         "${MIGRATE_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}",
         "up"
       ]
+
+  migrate-mysql:
+    image: migrate/migrate:${MIGRATE_IMAGE_TAG:-v4.18.3}
+    container_name: ${MYSQL_MIGRATE_CONTAINER_NAME:-racingguru-migrate-mysql}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./RacingGuru/migrations:/migrations:ro
+    command:
+      [
+        "-path",
+        "/migrations/mysql",
+        "-database",
+        "${MYSQL_MIGRATE_DATABASE_URL:-mysql://${MYSQL_USER:-races}:${MYSQL_PASSWORD:-1337}@tcp(${MYSQL_HOSTNAME:-mysql}:${MYSQL_CONTAINER_PORT:-3306})/${MYSQL_DATABASE:-races}?multiStatements=true}",
+        "up"
+      ]
+
+  db-sync:
+    image: ${DB_SYNC_IMAGE_NAME:-racingguru-db-sync}:${DB_SYNC_IMAGE_TAG:-latest}
+    build:
+      context: ./RacingGuru/migrations/sync
+      dockerfile: Dockerfile
+    container_name: ${DB_SYNC_CONTAINER_NAME:-racingguru-db-sync}
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      migrate-mysql:
+        condition: service_completed_successfully
+    environment:
+      DBMS: "${DBMS:-postgres}"
+      DB_SYNC_SOURCE: "${DB_SYNC_SOURCE:-auto}"
+      DB_SYNC_DELETE_STALE: "${DB_SYNC_DELETE_STALE:-false}"
+      APP_POSTGRES_DATABASE_URL: "${APP_POSTGRES_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
+      APP_MYSQL_DATABASE_URL: "${APP_MYSQL_DATABASE_URL:-${MYSQL_USER:-races}:${MYSQL_PASSWORD:-1337}@tcp(${MYSQL_HOSTNAME:-mysql}:${MYSQL_CONTAINER_PORT:-3306})/${MYSQL_DATABASE:-races}?parseTime=true}"
 
   app:
     image: ${APP_IMAGE_NAME:-racingguru-app}:${APP_IMAGE_TAG:-latest}
@@ -45,11 +100,16 @@ services:
     container_name: ${APP_CONTAINER_NAME:-racingguru-app}
     restart: unless-stopped
     depends_on:
-      migrate:
+      db-sync:
         condition: service_completed_successfully
     environment:
       SERVER_ADDR: "${SERVER_ADDR:-:8080}"
-      DATABASE_URL: "${APP_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
+      DBMS: "${DBMS:-postgres}"
+      APP_POSTGRES_DATABASE_URL: "${APP_POSTGRES_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
+      APP_MYSQL_DATABASE_URL: "${APP_MYSQL_DATABASE_URL:-${MYSQL_USER:-races}:${MYSQL_PASSWORD:-1337}@tcp(${MYSQL_HOSTNAME:-mysql}:${MYSQL_CONTAINER_PORT:-3306})/${MYSQL_DATABASE:-races}?parseTime=true}"
+      DB_MAX_OPEN_CONNS: "${DB_MAX_OPEN_CONNS:-25}"
+      DB_MAX_IDLE_CONNS: "${DB_MAX_IDLE_CONNS:-25}"
+      DB_CONN_MAX_LIFETIME: "${DB_CONN_MAX_LIFETIME:-5m}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me-please}"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       LOG_FILE: "${LOG_FILE:-}"
@@ -80,3 +140,4 @@ services:
 
 volumes:
   postgres_data:
+  mysql_data:

@@ -411,6 +411,18 @@ CREATE TABLE public.users (
     created_at timestamp without time zone
 );
 
+CREATE TABLE public.db_sync_state (
+    name text PRIMARY KEY,
+    value text NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE public.sudoku_matrix_completions (
+    user_id uuid NOT NULL,
+    matrix_type text NOT NULL,
+    completed_on date DEFAULT CURRENT_DATE NOT NULL
+);
+
 ALTER TABLE ONLY public.car_p
     ADD CONSTRAINT car_p_pkey PRIMARY KEY (id);
 
@@ -446,6 +458,13 @@ ALTER TABLE ONLY public.driver
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.sudoku_matrix_completions
+    ADD CONSTRAINT sudoku_matrix_completions_unique UNIQUE (user_id, matrix_type, completed_on);
+
+ALTER TABLE ONLY public.sudoku_matrix_completions
+    ADD CONSTRAINT sudoku_matrix_completions_matrix_type_check
+    CHECK (matrix_type IN ('drivers', 'teams'));
 
 ALTER TABLE ONLY public.car
     ADD CONSTRAINT car_manufacturer_fkey
@@ -498,6 +517,10 @@ ALTER TABLE ONLY public.qualifying
 ALTER TABLE ONLY public.qualifying
     ADD CONSTRAINT qualifying_race_fkey
     FOREIGN KEY (race) REFERENCES public.race(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.sudoku_matrix_completions
+    ADD CONSTRAINT sudoku_matrix_completions_user_id_fk
+    FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY public.race
     ADD CONSTRAINT race_championship_fkey

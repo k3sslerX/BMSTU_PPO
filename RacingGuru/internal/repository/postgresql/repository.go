@@ -1,4 +1,4 @@
-package repository
+package postgresql
 
 import (
 	sq "github.com/Masterminds/squirrel"
