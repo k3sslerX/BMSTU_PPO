@@ -26,3 +26,15 @@ type MatrixTeams struct {
 	Field          [3][3][]Team          `json:"field"`
 	ConditionSpecs [2][3]SudokuCondition `json:"condition_specs"`
 }
+
+type SudokuMatrixType string
+
+const (
+	SudokuMatrixTypeDrivers SudokuMatrixType = "drivers"
+	SudokuMatrixTypeTeams   SudokuMatrixType = "teams"
+)
+
+type SudokuCompletionStats struct {
+	DriverMatrices int64 `json:"driver_matrices"`
+	TeamMatrices   int64 `json:"team_matrices"`
+}

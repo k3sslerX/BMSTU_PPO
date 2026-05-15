@@ -126,6 +126,8 @@ definitions:
         type: string
       model:
         type: string
+      raceclass:
+        type: string
       year:
         type: integer
     type: object
@@ -147,6 +149,8 @@ definitions:
   models.Championship:
     properties:
       id:
+        type: string
+      organizer:
         type: string
       year:
         type: integer
@@ -272,6 +276,13 @@ definitions:
       total_races:
         type: integer
       total_wins:
+        type: integer
+    type: object
+  models.SudokuCompletionStats:
+    properties:
+      driver_matrices:
+        type: integer
+      team_matrices:
         type: integer
     type: object
   models.SudokuCondition:
@@ -1600,6 +1611,32 @@ paths:
       summary: Team statistics
       tags:
       - stats
+  /sudoku/completions:
+    get:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SudokuCompletionStats'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get sudoku completion counts
+      tags:
+      - sudoku
   /sudoku/drivers:
     get:
       parameters:
@@ -1626,6 +1663,30 @@ paths:
       summary: Get driver sudoku matrix
       tags:
       - sudoku
+  /sudoku/drivers/completions:
+    post:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Mark driver sudoku matrix as completed
+      tags:
+      - sudoku
   /sudoku/teams:
     get:
       parameters:
@@ -1650,6 +1711,30 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       summary: Get team sudoku matrix
+      tags:
+      - sudoku
+  /sudoku/teams/completions:
+    post:
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Mark team sudoku matrix as completed
       tags:
       - sudoku
   /swagger.yaml:

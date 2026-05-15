@@ -116,6 +116,16 @@ Table favourite_teams {
   team uuid [not null]
 }
 
+Table sudoku_matrix_completions {
+  user_id uuid [not null]
+  matrix_type text [not null, note: 'drivers | teams']
+  completed_on date [not null, default: `CURRENT_DATE`]
+
+  indexes {
+    (user_id, matrix_type, completed_on) [unique, name: 'sudoku_matrix_completions_unique']
+  }
+}
+
 Ref: car.manufacturer > manufacturer.id [delete: cascade]
 Ref: car.raceclass > raceclass.id [delete: cascade]
 Ref: car_p.car > car.id [delete: cascade]
@@ -133,3 +143,4 @@ Ref: favourite_drivers.user_id > users.id
 Ref: favourite_drivers.driver > driver.id
 Ref: favourite_teams.user_id > users.id
 Ref: favourite_teams.team > team.id
+Ref: sudoku_matrix_completions.user_id > users.id [delete: cascade]

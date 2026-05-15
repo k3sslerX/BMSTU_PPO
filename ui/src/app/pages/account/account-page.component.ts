@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { Driver, Team } from '../../core/models/api.models';
+import { Driver, SudokuCompletionStats, Team } from '../../core/models/api.models';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { FavouriteStoreService } from '../../core/services/favourite-store.service';
@@ -30,9 +30,15 @@ export class AccountPageComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly passwordBusy = signal(false);
   protected readonly favouritesBusy = signal(false);
+  protected readonly sudokuStatsBusy = signal(false);
   protected readonly favouriteActionBusyId = signal<string | null>(null);
   protected readonly passwordFeedback = signal<Feedback | null>(null);
   protected readonly favouritesFeedback = signal<Feedback | null>(null);
+  protected readonly sudokuStatsFeedback = signal<Feedback | null>(null);
+  protected readonly sudokuCompletionStats = signal<SudokuCompletionStats>({
+    driver_matrices: 0,
+    team_matrices: 0
+  });
   protected readonly favouriteDrivers = signal<Driver[]>([]);
   protected readonly favouriteTeams = signal<Team[]>([]);
   protected readonly driverPage = signal(0);
@@ -49,6 +55,7 @@ export class AccountPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadSudokuCompletionStats();
     this.loadFavourites();
   }
 
@@ -108,6 +115,30 @@ export class AccountPageComponent implements OnInit {
           }
 
           this.favouritesFeedback.set({
+            kind: 'error',
+            text: readApiError(error)
+          });
+        }
+      });
+  }
+
+  protected loadSudokuCompletionStats(): void {
+    if (!this.auth.isLoggedIn()) {
+      return;
+    }
+
+    this.sudokuStatsBusy.set(true);
+    this.sudokuStatsFeedback.set(null);
+
+    this.api
+      .getSudokuCompletionStats()
+      .pipe(finalize(() => this.sudokuStatsBusy.set(false)))
+      .subscribe({
+        next: (stats) => {
+          this.sudokuCompletionStats.set(stats);
+        },
+        error: (error) => {
+          this.sudokuStatsFeedback.set({
             kind: 'error',
             text: readApiError(error)
           });
