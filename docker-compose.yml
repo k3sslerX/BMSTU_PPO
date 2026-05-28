@@ -19,21 +19,20 @@ services:
       timeout: 5s
       retries: 10
 
-  mysql:
-    image: mysql:${MYSQL_IMAGE_TAG:-8.4}
-    container_name: ${MYSQL_CONTAINER_NAME:-racingguru-mysql}
+  mongo:
+    image: mongo:${MONGO_IMAGE_TAG:-7.0}
+    container_name: ${MONGO_CONTAINER_NAME:-racingguru-mongo}
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-races}
-      MYSQL_USER: ${MYSQL_USER:-races}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1337}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-races}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-1337}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-races}
     ports:
-      - "${MYSQL_HOST_PORT:-3306}:3306"
+      - "${MONGO_HOST_PORT:-27017}:27017"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mongosh --quiet \"mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@127.0.0.1:27017/admin\" --eval \"db.adminCommand('ping').ok\" | grep 1"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -55,23 +54,6 @@ services:
         "up"
       ]
 
-  migrate-mysql:
-    image: migrate/migrate:${MIGRATE_IMAGE_TAG:-v4.18.3}
-    container_name: ${MYSQL_MIGRATE_CONTAINER_NAME:-racingguru-migrate-mysql}
-    depends_on:
-      mysql:
-        condition: service_healthy
-    volumes:
-      - ./RacingGuru/migrations:/migrations:ro
-    command:
-      [
-        "-path",
-        "/migrations/mysql",
-        "-database",
-        "${MYSQL_MIGRATE_DATABASE_URL:-mysql://${MYSQL_USER:-races}:${MYSQL_PASSWORD:-1337}@tcp(${MYSQL_HOSTNAME:-mysql}:${MYSQL_CONTAINER_PORT:-3306})/${MYSQL_DATABASE:-races}?multiStatements=true}",
-        "up"
-      ]
-
   db-sync:
     image: ${DB_SYNC_IMAGE_NAME:-racingguru-db-sync}:${DB_SYNC_IMAGE_TAG:-latest}
     build:
@@ -82,14 +64,15 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
-      migrate-mysql:
-        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
     environment:
       DBMS: "${DBMS:-postgres}"
       DB_SYNC_SOURCE: "${DB_SYNC_SOURCE:-auto}"
       DB_SYNC_DELETE_STALE: "${DB_SYNC_DELETE_STALE:-false}"
       APP_POSTGRES_DATABASE_URL: "${APP_POSTGRES_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
-      APP_MYSQL_DATABASE_URL: "${APP_MYSQL_DATABASE_URL:-${MYSQL_USER:-races}:${MYSQL_PASSWORD:-1337}@tcp(${MYSQL_HOSTNAME:-mysql}:${MYSQL_CONTAINER_PORT:-3306})/${MYSQL_DATABASE:-races}?parseTime=true}"
+      APP_MONGO_DATABASE_URL: "${APP_MONGO_DATABASE_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-races}:${MONGO_INITDB_ROOT_PASSWORD:-1337}@${MONGO_HOSTNAME:-mongo}:${MONGO_CONTAINER_PORT:-27017}/${MONGO_DATABASE:-races}?authSource=admin}"
+      APP_MONGO_DATABASE_NAME: "${APP_MONGO_DATABASE_NAME:-${MONGO_DATABASE:-races}}"
 
   app:
     image: ${APP_IMAGE_NAME:-racingguru-app}:${APP_IMAGE_TAG:-latest}
@@ -106,10 +89,8 @@ services:
       SERVER_ADDR: "${SERVER_ADDR:-:8080}"
       DBMS: "${DBMS:-postgres}"
       APP_POSTGRES_DATABASE_URL: "${APP_POSTGRES_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
-      APP_MYSQL_DATABASE_URL: "${APP_MYSQL_DATABASE_URL:-${MYSQL_USER:-races}:${MYSQL_PASSWORD:-1337}@tcp(${MYSQL_HOSTNAME:-mysql}:${MYSQL_CONTAINER_PORT:-3306})/${MYSQL_DATABASE:-races}?parseTime=true}"
-      DB_MAX_OPEN_CONNS: "${DB_MAX_OPEN_CONNS:-25}"
-      DB_MAX_IDLE_CONNS: "${DB_MAX_IDLE_CONNS:-25}"
-      DB_CONN_MAX_LIFETIME: "${DB_CONN_MAX_LIFETIME:-5m}"
+      APP_MONGO_DATABASE_URL: "${APP_MONGO_DATABASE_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-races}:${MONGO_INITDB_ROOT_PASSWORD:-1337}@${MONGO_HOSTNAME:-mongo}:${MONGO_CONTAINER_PORT:-27017}/${MONGO_DATABASE:-races}?authSource=admin}"
+      APP_MONGO_DATABASE_NAME: "${APP_MONGO_DATABASE_NAME:-${MONGO_DATABASE:-races}}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me-please}"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       LOG_FILE: "${LOG_FILE:-}"
@@ -140,4 +121,4 @@ services:
 
 volumes:
   postgres_data:
-  mysql_data:
+  mongo_data:

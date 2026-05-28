@@ -4,18 +4,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import datetime as dt
 import os
-import re
 import sys
 from typing import Any
-from urllib.parse import unquote_plus, urlparse
+from urllib.parse import urlparse
 from uuid import UUID
 
-import pymysql
 import psycopg
+from pymongo import MongoClient
 
 
 POSTGRES = "postgres"
-MYSQL = "mysql"
+MONGO = "mongo"
 STATE_TABLE = "db_sync_state"
 LAST_ACTIVE_KEY = "last_active_dbms"
 
@@ -34,8 +33,8 @@ class Database:
     conn: Any
 
     def quote(self, identifier: str) -> str:
-        if self.dbms == MYSQL:
-            return "`" + identifier.replace("`", "``") + "`"
+        if self.dbms != POSTGRES:
+            raise ValueError(f"{self.dbms} does not use SQL identifier quoting")
         return '"' + identifier.replace('"', '""') + '"'
 
 
@@ -93,14 +92,14 @@ def main() -> int:
         delete_stale = env_bool("DB_SYNC_DELETE_STALE", False)
 
         postgres = Database(POSTGRES, connect_postgres())
-        mysql = Database(MYSQL, connect_mysql())
-        databases = {POSTGRES: postgres, MYSQL: mysql}
+        mongo = Database(MONGO, connect_mongo())
+        databases = {POSTGRES: postgres, MONGO: mongo}
 
         try:
             ensure_state_table(postgres)
-            ensure_state_table(mysql)
+            ensure_state_table(mongo)
 
-            source_name, target_name, reason = choose_direction(active, forced_source, postgres, mysql)
+            source_name, target_name, reason = choose_direction(active, forced_source, postgres, mongo)
             source = databases[source_name]
             target = databases[target_name]
 
@@ -112,17 +111,17 @@ def main() -> int:
 
             summary = sync_databases(source, target, delete_stale)
             write_last_active(postgres, active)
-            write_last_active(mysql, active)
+            write_last_active(mongo, active)
 
-            postgres.conn.commit()
-            mysql.conn.commit()
+            commit(postgres)
+            commit(mongo)
         except Exception:
-            postgres.conn.rollback()
-            mysql.conn.rollback()
+            rollback(postgres)
+            rollback(mongo)
             raise
         finally:
-            postgres.conn.close()
-            mysql.conn.close()
+            close_database(postgres)
+            close_database(mongo)
 
         print(
             f"db-sync: done source={summary.source} target={summary.target} "
@@ -153,9 +152,9 @@ def normalize_dbms(value: str) -> str:
     normalized = value.strip().lower()
     if normalized in ("", "pg", "postgresql", POSTGRES):
         return POSTGRES
-    if normalized in ("mariadb", MYSQL):
-        return MYSQL
-    raise ValueError(f"unsupported DBMS {value!r}; use postgres or mysql")
+    if normalized in ("mongodb", MONGO):
+        return MONGO
+    raise ValueError(f"unsupported DBMS {value!r}; use postgres or mongo")
 
 
 def normalize_source(value: str) -> str:
@@ -181,81 +180,56 @@ def connect_postgres() -> Any:
     return psycopg.connect(url)
 
 
-def connect_mysql() -> Any:
-    url = os.getenv("APP_MYSQL_DATABASE_URL", "").strip()
+def connect_mongo() -> Any:
+    url = os.getenv("APP_MONGO_DATABASE_URL", "").strip()
     if not url:
-        raise ValueError("APP_MYSQL_DATABASE_URL is required")
-    params = parse_mysql_dsn(url)
-    return pymysql.connect(
-        host=params["host"],
-        port=int(params["port"]),
-        user=params["user"],
-        password=params["password"],
-        database=params["database"],
-        charset="utf8mb4",
-        autocommit=False,
-    )
+        raise ValueError("APP_MONGO_DATABASE_URL is required")
+    client = MongoClient(url)
+    client.admin.command("ping")
+    return client[mongo_database_name(url)]
 
 
-def parse_mysql_dsn(raw: str) -> dict[str, str]:
-    raw = raw.strip()
-    without_scheme = raw.removeprefix("mysql://")
-    go_match = re.match(
-        r"^(?P<user>[^:@/]+)(?::(?P<password>[^@]*))?@tcp\((?P<host>[^:)]+)(?::(?P<port>\d+))?\)/(?P<database>[^?]+)",
-        without_scheme,
-    )
-    if go_match:
-        matched = go_match.groupdict()
-        return {
-            "user": unquote_plus(matched["user"]),
-            "password": unquote_plus(matched.get("password") or ""),
-            "host": matched["host"],
-            "port": matched.get("port") or "3306",
-            "database": unquote_plus(matched["database"]),
-        }
-
-    parsed = urlparse(raw if raw.startswith("mysql://") else "mysql://" + raw)
-    if not parsed.hostname or not parsed.username or not parsed.path.strip("/"):
-        raise ValueError("APP_MYSQL_DATABASE_URL must be a Go MySQL DSN or mysql:// URL")
-    return {
-        "user": unquote_plus(parsed.username),
-        "password": unquote_plus(parsed.password or ""),
-        "host": parsed.hostname,
-        "port": str(parsed.port or 3306),
-        "database": unquote_plus(parsed.path.strip("/")),
-    }
+def mongo_database_name(raw: str) -> str:
+    parsed = urlparse(raw)
+    database = parsed.path.strip("/")
+    if database:
+        return database
+    database = os.getenv("APP_MONGO_DATABASE_NAME", "").strip()
+    if database:
+        return database
+    raise ValueError("mongo database name is required in APP_MONGO_DATABASE_URL path or APP_MONGO_DATABASE_NAME")
 
 
-def choose_direction(active: str, forced_source: str, postgres: Database, mysql: Database) -> tuple[str, str, str]:
+def choose_direction(active: str, forced_source: str, postgres: Database, mongo: Database) -> tuple[str, str, str]:
     if forced_source == "disabled":
         write_last_active(postgres, active)
-        write_last_active(mysql, active)
-        postgres.conn.commit()
-        mysql.conn.commit()
+        write_last_active(mongo, active)
+        commit(postgres)
+        commit(mongo)
         print("db-sync: disabled by DB_SYNC_SOURCE", flush=True)
         sys.exit(0)
 
     if forced_source != "auto":
         return forced_source, other_dbms(forced_source), "forced"
 
-    state = newest_state(read_state(postgres), read_state(mysql))
+    state = newest_state(read_state(postgres), read_state(mongo))
     if state.valid:
         if state.dbms == active:
             return active, other_dbms(active), "last-active-current"
         return state.dbms, active, "last-active-switch"
 
     postgres_count = total_row_count(postgres)
-    mysql_count = total_row_count(mysql)
-    if postgres_count > mysql_count:
-        return POSTGRES, MYSQL, "initial-row-count"
-    if mysql_count > postgres_count:
-        return MYSQL, POSTGRES, "initial-row-count"
+    mongo_count = total_row_count(mongo)
+    if postgres_count > mongo_count:
+        return POSTGRES, MONGO, "initial-row-count"
+    if mongo_count > postgres_count:
+        return MONGO, POSTGRES, "initial-row-count"
 
     return other_dbms(active), active, "initial-active-switch"
 
 
 def other_dbms(dbms: str) -> str:
-    return MYSQL if dbms == POSTGRES else POSTGRES
+    return MONGO if dbms == POSTGRES else POSTGRES
 
 
 def newest_state(left: State, right: State) -> State:
@@ -267,6 +241,16 @@ def newest_state(left: State, right: State) -> State:
 
 
 def read_state(database: Database) -> State:
+    if database.dbms == MONGO:
+        row = database.conn[STATE_TABLE].find_one({"_id": LAST_ACTIVE_KEY}) or database.conn[STATE_TABLE].find_one(
+            {"name": LAST_ACTIVE_KEY}
+        )
+        if not row:
+            return State()
+        dbms = normalize_dbms(str(row.get("value", "")))
+        updated_at = normalize_value(row.get("updated_at")) or dt.datetime.min
+        return State(dbms=dbms, updated_at=updated_at, valid=True)
+
     query = (
         f"SELECT {database.quote('value')}, {database.quote('updated_at')} "
         f"FROM {database.quote(STATE_TABLE)} "
@@ -281,6 +265,14 @@ def read_state(database: Database) -> State:
 
 def write_last_active(database: Database, active: str) -> None:
     now = dt.datetime.utcnow().replace(microsecond=0)
+    if database.dbms == MONGO:
+        database.conn[STATE_TABLE].update_one(
+            {"_id": LAST_ACTIVE_KEY},
+            {"$set": {"name": LAST_ACTIVE_KEY, "value": active, "updated_at": now}},
+            upsert=True,
+        )
+        return
+
     if database.dbms == POSTGRES:
         query = (
             f"INSERT INTO {database.quote(STATE_TABLE)} "
@@ -293,16 +285,15 @@ def write_last_active(database: Database, active: str) -> None:
         execute(database, query, (LAST_ACTIVE_KEY, active, now))
         return
 
-    query = (
-        f"INSERT INTO {database.quote(STATE_TABLE)} "
-        f"({database.quote('name')}, {database.quote('value')}, {database.quote('updated_at')}) "
-        "VALUES (%s, %s, %s) "
-        f"ON DUPLICATE KEY UPDATE {database.quote('value')} = %s, {database.quote('updated_at')} = %s"
-    )
-    execute(database, query, (LAST_ACTIVE_KEY, active, now, active, now))
-
 
 def ensure_state_table(database: Database) -> None:
+    if database.dbms == MONGO:
+        database.conn[STATE_TABLE].create_index("name", unique=True)
+        for table in TABLES:
+            if table.key_columns == ("id",):
+                database.conn[table.name].create_index("id", unique=True)
+        return
+
     if database.dbms == POSTGRES:
         execute(
             database,
@@ -316,22 +307,13 @@ def ensure_state_table(database: Database) -> None:
         )
         return
 
-    execute(
-        database,
-        f"""
-        CREATE TABLE IF NOT EXISTS {database.quote(STATE_TABLE)} (
-            {database.quote('name')} VARCHAR(128) NOT NULL,
-            {database.quote('value')} VARCHAR(128) NOT NULL,
-            {database.quote('updated_at')} DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-            PRIMARY KEY ({database.quote('name')})
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        """,
-    )
-
 
 def total_row_count(database: Database) -> int:
     total = 0
     for table in TABLES:
+        if database.dbms == MONGO:
+            total += int(database.conn[table.name].count_documents({}))
+            continue
         rows = fetch_all(database, f"SELECT COUNT(*) FROM {database.quote(table.name)}")
         total += int(rows[0][0])
     return total
@@ -360,6 +342,14 @@ def sync_databases(source: Database, target: Database, delete_stale: bool) -> Su
 
 
 def fetch_table(database: Database, table: Table) -> list[dict[str, Any]]:
+    if database.dbms == MONGO:
+        projection = {column: True for column in table.columns}
+        projection["_id"] = False
+        rows = []
+        for document in database.conn[table.name].find({}, projection):
+            rows.append({column: normalize_value(document.get(column)) for column in table.columns})
+        return rows
+
     query = (
         f"SELECT {quoted_columns(database, table.columns)} "
         f"FROM {database.quote(table.name)}"
@@ -368,6 +358,19 @@ def fetch_table(database: Database, table: Table) -> list[dict[str, Any]]:
 
 
 def fetch_existing(database: Database, table: Table, row: dict[str, Any]) -> dict[str, Any] | None:
+    if database.dbms == MONGO:
+        projection = {column: True for column in table.columns}
+        projection["_id"] = False
+        document = database.conn[table.name].find_one({"_id": row_key(table, row)}, projection)
+        if document is None:
+            document = database.conn[table.name].find_one(
+                {column: row[column] for column in table.key_columns},
+                projection,
+            )
+        if document is None:
+            return None
+        return {column: normalize_value(document.get(column)) for column in table.columns}
+
     where, args = build_where(database, table.key_columns, row)
     query = (
         f"SELECT {quoted_columns(database, table.columns)} "
@@ -391,6 +394,10 @@ def upsert_row(database: Database, table: Table, row: dict[str, Any]) -> str:
 
 
 def insert_row(database: Database, table: Table, row: dict[str, Any]) -> None:
+    if database.dbms == MONGO:
+        database.conn[table.name].insert_one(mongo_document(table, row))
+        return
+
     placeholders = ", ".join(["%s"] * len(table.columns))
     query = (
         f"INSERT INTO {database.quote(table.name)} "
@@ -400,6 +407,14 @@ def insert_row(database: Database, table: Table, row: dict[str, Any]) -> None:
 
 
 def update_row(database: Database, table: Table, row: dict[str, Any]) -> None:
+    if database.dbms == MONGO:
+        database.conn[table.name].replace_one(
+            {"_id": row_key(table, row)},
+            mongo_document(table, row),
+            upsert=True,
+        )
+        return
+
     update_columns = [column for column in table.columns if column not in table.key_columns]
     if not update_columns:
         return
@@ -414,6 +429,10 @@ def delete_missing_rows(database: Database, table: Table, source_keys: set[str])
     deleted = 0
     for row in fetch_table(database, table):
         if row_key(table, row) in source_keys:
+            continue
+        if database.dbms == MONGO:
+            database.conn[table.name].delete_one({"_id": row_key(table, row)})
+            deleted += 1
             continue
         where, args = build_where(database, table.key_columns, row)
         execute(database, f"DELETE FROM {database.quote(table.name)} WHERE {where}", args)
@@ -459,7 +478,16 @@ def normalize_value(value: Any) -> Any:
         if value.tzinfo is not None:
             value = value.astimezone(dt.timezone.utc).replace(tzinfo=None)
         return value.replace(microsecond=0)
+    if isinstance(value, dt.date):
+        return value.isoformat()
     return value
+
+
+def mongo_document(table: Table, row: dict[str, Any]) -> dict[str, Any]:
+    document = {"_id": row_key(table, row)}
+    for column in table.columns:
+        document[column] = normalize_value(row[column])
+    return document
 
 
 def build_where(database: Database, columns: tuple[str, ...], row: dict[str, Any]) -> tuple[str, tuple[Any, ...]]:
@@ -487,6 +515,23 @@ def fetch_all(database: Database, query: str, args: tuple[Any, ...] = ()) -> lis
 def execute(database: Database, query: str, args: tuple[Any, ...] = ()) -> None:
     with database.conn.cursor() as cursor:
         cursor.execute(query, args)
+
+
+def commit(database: Database) -> None:
+    if database.dbms == POSTGRES:
+        database.conn.commit()
+
+
+def rollback(database: Database) -> None:
+    if database.dbms == POSTGRES:
+        database.conn.rollback()
+
+
+def close_database(database: Database) -> None:
+    if database.dbms == MONGO:
+        database.conn.client.close()
+        return
+    database.conn.close()
 
 
 if __name__ == "__main__":

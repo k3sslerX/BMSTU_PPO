@@ -5,17 +5,18 @@ import (
 	"RacingGuru/internal/controller/handlers"
 	"RacingGuru/internal/controller/server"
 	"RacingGuru/internal/logger"
-	mysqlrepo "RacingGuru/internal/repository/mysql"
+	mongodbrepo "RacingGuru/internal/repository/mongodb"
 	postgresqlrepo "RacingGuru/internal/repository/postgresql"
 	"context"
-	"database/sql"
 	"fmt"
+	"net/url"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 func main() {
@@ -79,10 +80,10 @@ func databaseURLForDBMS(dbms string) (string, error) {
 	switch normalizeDBMS(dbms) {
 	case "postgres":
 		envName = "APP_POSTGRES_DATABASE_URL"
-	case "mysql":
-		envName = "APP_MYSQL_DATABASE_URL"
+	case "mongo":
+		envName = "APP_MONGO_DATABASE_URL"
 	default:
-		return "", fmt.Errorf("unsupported DBMS %q; use postgres or mysql", dbms)
+		return "", fmt.Errorf("unsupported DBMS %q; use postgres or mongo", dbms)
 	}
 
 	dbURL := strings.TrimSpace(os.Getenv(envName))
@@ -105,22 +106,28 @@ func openRepository(ctx context.Context, dbms, dbURL string) (handlers.Repo, fun
 			return nil, nil, err
 		}
 		return postgresqlrepo.NewRepository(pool), pool.Close, nil
-	case "mysql":
-		db, err := sql.Open("mysql", dbURL)
+	case "mongo":
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbURL))
 		if err != nil {
 			return nil, nil, err
 		}
-		if err := configureSQLPool(db); err != nil {
-			_ = db.Close()
+		if err := client.Ping(ctx, readpref.Primary()); err != nil {
+			_ = client.Disconnect(ctx)
 			return nil, nil, err
 		}
-		if err := db.PingContext(ctx); err != nil {
-			_ = db.Close()
+		dbName, err := mongoDatabaseName(dbURL)
+		if err != nil {
+			_ = client.Disconnect(ctx)
 			return nil, nil, err
 		}
-		return mysqlrepo.NewRepository(db), func() { _ = db.Close() }, nil
+		repo := mongodbrepo.NewRepository(client.Database(dbName))
+		if err := repo.EnsureIndexes(ctx); err != nil {
+			_ = client.Disconnect(ctx)
+			return nil, nil, err
+		}
+		return repo, func() { _ = client.Disconnect(context.Background()) }, nil
 	default:
-		return nil, nil, fmt.Errorf("unsupported DBMS %q; use postgres or mysql", dbms)
+		return nil, nil, fmt.Errorf("unsupported DBMS %q; use postgres or mongo", dbms)
 	}
 }
 
@@ -128,64 +135,28 @@ func normalizeDBMS(value string) string {
 	switch strings.ToLower(strings.TrimSpace(value)) {
 	case "", "postgresql", "pg", "postgres":
 		return "postgres"
-	case "mysql", "mariadb":
-		return "mysql"
+	case "mongodb", "mongo":
+		return "mongo"
 	default:
 		return strings.ToLower(strings.TrimSpace(value))
 	}
 }
 
-func configureSQLPool(db *sql.DB) error {
-	maxOpen, err := envInt("DB_MAX_OPEN_CONNS", 25)
+func mongoDatabaseName(dbURL string) (string, error) {
+	parsed, err := url.Parse(dbURL)
 	if err != nil {
-		return err
-	}
-	maxIdle, err := envInt("DB_MAX_IDLE_CONNS", 25)
-	if err != nil {
-		return err
-	}
-	maxLifetime, err := envDuration("DB_CONN_MAX_LIFETIME", 5*time.Minute)
-	if err != nil {
-		return err
+		return "", err
 	}
 
-	db.SetMaxOpenConns(maxOpen)
-	db.SetMaxIdleConns(maxIdle)
-	db.SetConnMaxLifetime(maxLifetime)
-
-	return nil
-}
-
-func envInt(name string, fallback int) (int, error) {
-	raw := strings.TrimSpace(os.Getenv(name))
-	if raw == "" {
-		return fallback, nil
+	dbName := strings.Trim(parsed.Path, "/")
+	if dbName != "" {
+		return dbName, nil
 	}
 
-	value, err := strconv.Atoi(raw)
-	if err != nil {
-		return 0, fmt.Errorf("%s must be integer: %w", name, err)
-	}
-	if value < 0 {
-		return 0, fmt.Errorf("%s must be non-negative", name)
+	dbName = strings.TrimSpace(os.Getenv("APP_MONGO_DATABASE_NAME"))
+	if dbName != "" {
+		return dbName, nil
 	}
 
-	return value, nil
-}
-
-func envDuration(name string, fallback time.Duration) (time.Duration, error) {
-	raw := strings.TrimSpace(os.Getenv(name))
-	if raw == "" {
-		return fallback, nil
-	}
-
-	value, err := time.ParseDuration(raw)
-	if err != nil {
-		return 0, fmt.Errorf("%s must be duration, e.g. 5m: %w", name, err)
-	}
-	if value < 0 {
-		return 0, fmt.Errorf("%s must be non-negative", name)
-	}
-
-	return value, nil
+	return "", fmt.Errorf("mongo database name is required in APP_MONGO_DATABASE_URL path or APP_MONGO_DATABASE_NAME")
 }
