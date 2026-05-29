@@ -10,6 +10,7 @@ ALTER TABLE IF EXISTS ONLY public.finish DROP CONSTRAINT IF EXISTS finish_race_f
 ALTER TABLE IF EXISTS ONLY public.finish DROP CONSTRAINT IF EXISTS finish_car_p_fkey;
 ALTER TABLE IF EXISTS ONLY public.favourite_drivers DROP CONSTRAINT IF EXISTS fdrivers_user_id_fk;
 ALTER TABLE IF EXISTS ONLY public.favourite_drivers DROP CONSTRAINT IF EXISTS fdrivers_driver_fk;
+ALTER TABLE IF EXISTS ONLY public.sudoku_matrix_completions DROP CONSTRAINT IF EXISTS sudoku_matrix_completions_user_id_fk;
 ALTER TABLE IF EXISTS ONLY public.championship DROP CONSTRAINT IF EXISTS championship_organizer_fkey;
 ALTER TABLE IF EXISTS ONLY public.car DROP CONSTRAINT IF EXISTS car_raceclass_fkey;
 ALTER TABLE IF EXISTS ONLY public.car_p DROP CONSTRAINT IF EXISTS car_p_team_fkey;
@@ -17,6 +18,8 @@ ALTER TABLE IF EXISTS ONLY public.car_p DROP CONSTRAINT IF EXISTS car_p_car_fkey
 ALTER TABLE IF EXISTS ONLY public.car DROP CONSTRAINT IF EXISTS car_manufacturer_fkey;
 
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
+ALTER TABLE IF EXISTS ONLY public.sudoku_matrix_completions DROP CONSTRAINT IF EXISTS sudoku_matrix_completions_unique;
+ALTER TABLE IF EXISTS ONLY public.sudoku_matrix_completions DROP CONSTRAINT IF EXISTS sudoku_matrix_completions_matrix_type_check;
 ALTER TABLE IF EXISTS ONLY public.driver DROP CONSTRAINT IF EXISTS unique_driver;
 ALTER TABLE IF EXISTS ONLY public.track DROP CONSTRAINT IF EXISTS track_pkey;
 ALTER TABLE IF EXISTS ONLY public.team DROP CONSTRAINT IF EXISTS team_pkey;
@@ -29,6 +32,8 @@ ALTER TABLE IF EXISTS ONLY public.championship DROP CONSTRAINT IF EXISTS champio
 ALTER TABLE IF EXISTS ONLY public.car DROP CONSTRAINT IF EXISTS car_pkey;
 ALTER TABLE IF EXISTS ONLY public.car_p DROP CONSTRAINT IF EXISTS car_p_pkey;
 
+DROP TABLE IF EXISTS public.sudoku_matrix_completions;
+DROP TABLE IF EXISTS public.db_sync_state;
 DROP TABLE IF EXISTS public.users;
 DROP TABLE IF EXISTS public.track;
 DROP TABLE IF EXISTS public.team_p;

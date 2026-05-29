@@ -19,6 +19,24 @@ services:
       timeout: 5s
       retries: 10
 
+  mongo:
+    image: mongo:${MONGO_IMAGE_TAG:-7.0}
+    container_name: ${MONGO_CONTAINER_NAME:-racingguru-mongo}
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-races}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-1337}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-races}
+    ports:
+      - "${MONGO_HOST_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet \"mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@127.0.0.1:27017/admin\" --eval \"db.adminCommand('ping').ok\" | grep 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   migrate:
     image: migrate/migrate:${MIGRATE_IMAGE_TAG:-v4.18.3}
     container_name: ${MIGRATE_CONTAINER_NAME:-racingguru-migrate}
@@ -30,11 +48,31 @@ services:
     command:
       [
         "-path",
-        "/migrations",
+        "/migrations/postgresql",
         "-database",
         "${MIGRATE_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}",
         "up"
       ]
+
+  db-sync:
+    image: ${DB_SYNC_IMAGE_NAME:-racingguru-db-sync}:${DB_SYNC_IMAGE_TAG:-latest}
+    build:
+      context: ./RacingGuru/migrations/sync
+      dockerfile: Dockerfile
+    container_name: ${DB_SYNC_CONTAINER_NAME:-racingguru-db-sync}
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
+    environment:
+      DBMS: "${DBMS:-postgres}"
+      DB_SYNC_SOURCE: "${DB_SYNC_SOURCE:-auto}"
+      DB_SYNC_DELETE_STALE: "${DB_SYNC_DELETE_STALE:-false}"
+      APP_POSTGRES_DATABASE_URL: "${APP_POSTGRES_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
+      APP_MONGO_DATABASE_URL: "${APP_MONGO_DATABASE_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-races}:${MONGO_INITDB_ROOT_PASSWORD:-1337}@${MONGO_HOSTNAME:-mongo}:${MONGO_CONTAINER_PORT:-27017}/${MONGO_DATABASE:-races}?authSource=admin}"
+      APP_MONGO_DATABASE_NAME: "${APP_MONGO_DATABASE_NAME:-${MONGO_DATABASE:-races}}"
 
   app:
     image: ${APP_IMAGE_NAME:-racingguru-app}:${APP_IMAGE_TAG:-latest}
@@ -45,11 +83,14 @@ services:
     container_name: ${APP_CONTAINER_NAME:-racingguru-app}
     restart: unless-stopped
     depends_on:
-      migrate:
+      db-sync:
         condition: service_completed_successfully
     environment:
       SERVER_ADDR: "${SERVER_ADDR:-:8080}"
-      DATABASE_URL: "${APP_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
+      DBMS: "${DBMS:-postgres}"
+      APP_POSTGRES_DATABASE_URL: "${APP_POSTGRES_DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-1337}@${POSTGRES_HOSTNAME:-postgres}:${POSTGRES_CONTAINER_PORT:-5432}/${POSTGRES_DB:-races}?sslmode=disable}"
+      APP_MONGO_DATABASE_URL: "${APP_MONGO_DATABASE_URL:-mongodb://${MONGO_INITDB_ROOT_USERNAME:-races}:${MONGO_INITDB_ROOT_PASSWORD:-1337}@${MONGO_HOSTNAME:-mongo}:${MONGO_CONTAINER_PORT:-27017}/${MONGO_DATABASE:-races}?authSource=admin}"
+      APP_MONGO_DATABASE_NAME: "${APP_MONGO_DATABASE_NAME:-${MONGO_DATABASE:-races}}"
       JWT_SECRET_KEY: "${JWT_SECRET_KEY:-change-me-please}"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
       LOG_FILE: "${LOG_FILE:-}"
@@ -80,3 +121,4 @@ services:
 
 volumes:
   postgres_data:
+  mongo_data:

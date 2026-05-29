@@ -18,7 +18,10 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder /out/racingguru /app/racingguru
 
 ENV SERVER_ADDR=:8080
-ENV DATABASE_URL=
+ENV DBMS=postgres
+ENV APP_POSTGRES_DATABASE_URL=
+ENV APP_MONGO_DATABASE_URL=
+ENV APP_MONGO_DATABASE_NAME=
 ENV LOG_LEVEL=
 ENV LOG_FILE=
 
